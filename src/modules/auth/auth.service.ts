@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import RegisterDto from './dto/register.dto';
 import { AuthProvider, UserRole } from 'generated/prisma/enums';
-import { Account } from 'generated/prisma/client';
 import { HashingService } from 'src/common/hashing/hashing.service';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,6 +16,7 @@ export class AuthService {
     return provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase();
   }
 
+  // TODO: Send email verification mail, update isEmailVerified to false by default
   async register(data: RegisterDto) {
     if (data.role === UserRole.ADMIN) {
       throw new BadRequestException(
@@ -86,6 +86,7 @@ export class AuthService {
         emailVerificationToken,
         emailVerificationTokenExpiry: new Date(Date.now() + 10 * 60 * 1000),
         role: data.role,
+        isEmailVerified: true,
 
         accounts: {
           create: {
