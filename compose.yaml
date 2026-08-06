@@ -1,0 +1,41 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credora-api
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run start:dev
+
+  db:
+    image: postgres:16-alpine
+    container_name: credora-db
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: credora_pass
+      POSTGRES_DB: credora_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d credora_db']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
