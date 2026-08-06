@@ -1,15 +1,26 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import RegisterDto from './dto/register.dto';
 import { AuthProvider, UserRole } from 'generated/prisma/enums';
 import { HashingService } from 'src/common/hashing/hashing.service';
 import { v4 as uuidv4 } from 'uuid';
+import LoginDto from './dto/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { JwtPayload } from './types/jwt-payload.type';
+import { Response } from 'express';
+import { AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant';
+import cookieOptions from 'src/common/constants/cookie-options.constant';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly hashingService: HashingService,
+    private readonly jwtService: JwtService,
   ) {}
 
   private getProviderName(provider: AuthProvider) {
@@ -100,6 +111,67 @@ export class AuthService {
     return {
       success: true,
       message: `Verification link has been sent to your email address. Please verify your email address within 10 minutes.`,
+    };
+  }
+
+  async login(data: LoginDto, res: Response) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: data.email,
+      },
+      include: {
+        accounts: true,
+      },
+    });
+
+    if (!user || !user.isEmailVerified) {
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    const credentialsProvider = user.accounts.find(
+      (a) => a.provider === AuthProvider.CREDENTIALS,
+    );
+    const oauthAccount = user.accounts.find(
+      (a) => a.provider !== AuthProvider.CREDENTIALS,
+    );
+
+    if (!credentialsProvider || !user.password) {
+      if (oauthAccount) {
+        throw new BadRequestException(
+          `Please sign in with ${this.getProviderName(oauthAccount.provider)}.`,
+        );
+      }
+
+      throw new UnauthorizedException('Invalid credentials.');
+    }
+
+    const validPassword = await this.hashingService.compareValues(
+      data.password,
+      user.password,
+    );
+
+    if (!validPassword) throw new UnauthorizedException('Invalid credentials.');
+
+    const payload: JwtPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token: string = this.jwtService.sign(payload);
+
+    res.cookie(AUTH_COOKIE_NAME, token, cookieOptions);
+
+    return {
+      success: true,
+      message: 'Logged in successfully.',
+      user: {
+        id: user.id,
+        avatar: user.avatar || '',
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     };
   }
 }
