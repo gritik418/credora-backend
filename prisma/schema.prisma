@@ -11,3 +11,53 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model User {
+  id            String   @id @default(cuid())
+
+  name String
+  avatar String?
+
+  email         String   @unique
+
+  password      String?
+
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+
+  role          UserRole     @default(EMPLOYEE)
+  
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  accounts Account[]
+}
+
+model Account {
+  id                 String   @id @default(cuid())
+
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  provider           AuthProvider
+  providerAccountId  String
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+}
+
+enum AuthProvider {
+  CREDENTIALS
+  GOOGLE
+}
+
+
+enum UserRole {
+  ADMIN
+  EMPLOYEE
+  RECRUITER
+  COMPANY
+}
