@@ -30,4 +30,4 @@ COPY --from=builder /app/node_modules/ ./node_modules/
 
 EXPOSE 8000
 
-CMD ["node", "dist/main"]
+CMD ["sh", "-c", "npx prisma generate --force-reset && npx prisma db push --force-reset && node dist/main.js"]

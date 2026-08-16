@@ -17,7 +17,7 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
-    command: npm run start:dev
+    command: sh -c "npx prisma db push && npm run start:dev"
 
   db:
     image: postgres:16-alpine

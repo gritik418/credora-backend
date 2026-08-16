@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import LoginDto from './dto/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from './types/jwt-payload.type';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant';
 import cookieOptions from 'src/common/constants/cookie-options.constant';
 
@@ -172,6 +172,12 @@ export class AuthService {
         email: user.email,
         role: user.role,
       },
+    };
+  }
+
+  async getMe(req: Request) {
+    return {
+      data: req.cookies,
     };
   }
 }

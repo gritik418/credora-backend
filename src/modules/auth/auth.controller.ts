@@ -1,18 +1,22 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
+  Req,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import RegisterDto from './dto/register.dto';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation/zod-validation.pipe';
 import RegisterSchema from './schemas/register.schema';
 import LoginDto from './dto/login.dto';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import LoginSchema from './schemas/login.schema';
+import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -33,5 +37,12 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.login(data, res);
+  }
+
+  @Get('me')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  async getMe(@Req() req: Request) {
+    return this.authService.getMe(req);
   }
 }
