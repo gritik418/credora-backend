@@ -73,12 +73,15 @@ model Organization {
   website     String?
   logo        String?
 
+  password String
+
   isEmailVerified    Boolean  @default(false)
   isActive      Boolean  @default(true)
 
   emailVerificationToken String?
   emailVerificationTokenExpiry DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  lastLoginAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

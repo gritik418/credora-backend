@@ -15,6 +15,7 @@ import { JwtPayload } from './types/jwt-payload.type';
 import { Request, Response } from 'express';
 import { AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant';
 import cookieOptions from 'src/common/constants/cookie-options.constant';
+import { User } from 'generated/prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -65,25 +66,6 @@ export class AuthService {
           );
         }
       }
-
-      if (!existingUser.isEmailVerified) {
-        const expired =
-          !existingUser.emailVerificationToken ||
-          !existingUser.emailVerificationTokenExpiry ||
-          existingUser.emailVerificationTokenExpiry < new Date();
-
-        if (!expired) {
-          throw new BadRequestException(
-            'An account with this email already exists and is awaiting verification. Please check your email and verify your account to continue.',
-          );
-        }
-
-        await this.prismaService.user.delete({
-          where: {
-            email: data.email,
-          },
-        });
-      }
     }
 
     const hashedPassword: string = await this.hashingService.hashValue(
@@ -92,28 +74,73 @@ export class AuthService {
 
     const emailVerificationToken: string = uuidv4();
 
-    await this.prismaService.user.create({
-      data: {
-        email: data.email,
-        name: data.name,
-        password: hashedPassword,
-        emailVerificationToken,
-        emailVerificationTokenExpiry: new Date(Date.now() + 10 * 60 * 1000),
-        role: data.role,
-        isEmailVerified: true, // TODO: Set to false and send verification mail
+    const hashedEmailVerificationToken: string =
+      await this.hashingService.hashValue(emailVerificationToken, 8);
 
-        accounts: {
-          create: {
-            provider: AuthProvider.CREDENTIALS,
-            providerAccountId: data.email,
+    const verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    let user: User | null = null;
+
+    if (existingUser) {
+      const credentialsAccount = existingUser.accounts.find(
+        (account) => account.provider === AuthProvider.CREDENTIALS,
+      );
+
+      user = await this.prismaService.user.update({
+        where: {
+          id: existingUser.id,
+        },
+        data: {
+          name: data.name,
+          role: data.role,
+          password: hashedPassword,
+
+          isEmailVerified: true, // TODO: change, only true after email verification
+          isActive: true, // TODO: change, only true after email verification
+
+          emailVerificationToken: hashedEmailVerificationToken,
+          emailVerificationTokenExpiry: verificationTokenExpiry,
+
+          ...(credentialsAccount
+            ? {}
+            : {
+                accounts: {
+                  create: {
+                    provider: AuthProvider.CREDENTIALS,
+                    providerAccountId: data.email,
+                  },
+                },
+              }),
+        },
+      });
+    } else {
+      user = await this.prismaService.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: hashedPassword,
+          role: data.role,
+
+          isEmailVerified: true, // TODO: change, only true after email verification
+          isActive: true, // TODO: change, only true after email verification
+
+          emailVerificationToken: hashedEmailVerificationToken,
+          emailVerificationTokenExpiry: verificationTokenExpiry,
+
+          accounts: {
+            create: {
+              provider: AuthProvider.CREDENTIALS,
+              providerAccountId: data.email,
+            },
           },
         },
-      },
-    });
+      });
+    }
 
     return {
       success: true,
       message: `Verification link has been sent to your email address. Please verify your email address within 10 minutes.`,
+      userId: user.id,
     };
   }
 
