@@ -73,7 +73,9 @@ export class AuthService {
           existingUser.emailVerificationTokenExpiry < new Date();
 
         if (!expired) {
-          throw new BadRequestException('Please verify your email first.');
+          throw new BadRequestException(
+            'An account with this email already exists and is awaiting verification. Please check your email and verify your account to continue.',
+          );
         }
 
         await this.prismaService.user.delete({
@@ -98,7 +100,7 @@ export class AuthService {
         emailVerificationToken,
         emailVerificationTokenExpiry: new Date(Date.now() + 10 * 60 * 1000),
         role: data.role,
-        isEmailVerified: true,
+        isEmailVerified: true, // TODO: Set to false and send verification mail
 
         accounts: {
           create: {
