@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
@@ -152,6 +153,15 @@ export class AuthService {
 
     if (!validPassword) throw new UnauthorizedException('Invalid credentials.');
 
+    await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        lastLoginAt: new Date(),
+      },
+    });
+
     const payload: JwtPayload = {
       id: user.id,
       email: user.email,
@@ -176,8 +186,38 @@ export class AuthService {
   }
 
   async getMe(req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+        isEmailVerified: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        avatar: true,
+        email: true,
+        role: true,
+        lastLoginAt: true,
+        isActive: true,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found.');
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Your account has been deactivated.');
+    }
+
+    const { isActive, ...userInfo } = user;
+
     return {
-      data: req.cookies,
+      success: true,
+      message: 'User fetched successfully.',
+      user: userInfo,
     };
   }
 }
