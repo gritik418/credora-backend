@@ -14,7 +14,7 @@ import OrganizationLoginSchema from './schemas/organization-login.schema';
 import OrganizationLoginDto from './dto/organization-login.dto';
 import { Response } from 'express';
 
-@Controller('organization/auth')
+@Controller('organizations/auth')
 export class OrganizationAuthController {
   constructor(
     private readonly organizationAuthService: OrganizationAuthService,
