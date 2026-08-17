@@ -35,6 +35,8 @@ model User {
   emailVerificationTokenExpiry DateTime?
 
   accounts Account[]
+  organizationMembers OrganizationMember[]
+  organizationInvites OrganizationInvite[]
 }
 
 model Account {
@@ -84,4 +86,65 @@ model Organization {
   lastLoginAt   DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  organizationMembers OrganizationMember[]
+  organizationInvites OrganizationInvite[]
 }
+
+model OrganizationMember {
+  id String @id @default(cuid())
+
+  userId         String
+  organizationId String
+
+  role OrganizationRole @default(MEMBER)
+
+  isActive Boolean @default(true)
+
+  joinedAt  DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([organizationId])
+  @@index([userId])
+}
+
+model OrganizationInvite {
+  id String @id @default(cuid())
+
+  email String
+
+  organizationId String
+  invitedById    String
+
+  role OrganizationRole @default(MEMBER)
+
+  token       String   @unique
+  expiresAt   DateTime
+
+  acceptedAt DateTime?
+  revokedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invitedBy User @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  
+
+  @@index([organizationId])
+  @@index([email])
+}
+
+enum OrganizationRole {
+  OWNER
+  ADMIN
+  RECRUITER
+  MANAGER
+  MEMBER
+}
+  
