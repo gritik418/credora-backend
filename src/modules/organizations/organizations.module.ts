@@ -18,4 +18,4 @@ import { OrganizationInvitesService } from './invites/invites.service';
     OrganizationInvitesService,
   ],
 })
-export class OrganizationModule {}
+export class OrganizationsModule {}
