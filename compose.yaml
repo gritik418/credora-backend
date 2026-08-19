@@ -13,13 +13,13 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_health
+        condition: service_healthy
       redis:
-        condition: service_health
+        condition: service_healthy
     volumes:
       - .:/app
       - /app/node_modules
-    command: sh -c "npx prisma db push && npm run start:dev"
+    command: sh -c "npx prisma db push --accept-data-loss && npm run start:dev"
 
   db:
     image: postgres:16-alpine
@@ -52,6 +52,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    command: redis-server --appendonly yes
 
 volumes:
   postgres_data:

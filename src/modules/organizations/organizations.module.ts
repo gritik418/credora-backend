@@ -5,8 +5,11 @@ import { OrganizationAuthController } from './auth/auth.controller';
 import { OrganizationAuthService } from './auth/auth.service';
 import { OrganizationInvitesController } from './invites/invites.controller';
 import { OrganizationInvitesService } from './invites/invites.service';
+import { HashingModule } from 'src/common/hashing/hashing.module';
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
+  imports: [HashingModule, JwtModule],
   controllers: [
     OrganizationsController,
     OrganizationAuthController,

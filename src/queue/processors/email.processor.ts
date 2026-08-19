@@ -6,9 +6,9 @@ import { join } from 'path';
 import { existsSync } from 'fs';
 import templateNames from '../constants/template-names.constants';
 import { readFile } from 'fs/promises';
-import handlebars from 'handlebars';
+import * as handlebars from 'handlebars';
 import UserVerificationEmailDto from '../dto/email/user-verification.dto';
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import EMAIL_JOB_NAMES from '../constants/email-job-names.constants';
 
@@ -30,7 +30,8 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
       'http://localhost:3000/logo.jpeg';
 
     this.transporter = nodemailer.createTransport({
-      service: 'gmail',
+      host: this.configService.get<string>('SMTP_SERVICE'),
+      port: Number(this.configService.get<string>('SMTP_PORT')),
       auth: {
         user: this.configService.get<string>('SMTP_USER'),
         pass: this.configService.get<string>('SMTP_PASS'),
@@ -80,7 +81,7 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
     }
   }
 
-  async process(job: Job, token?: string): Promise<any> {
+  async process(job: Job): Promise<any> {
     switch (job.name) {
       case EMAIL_JOB_NAMES.USER_VERIFICATION:
         const data = job.data as UserVerificationEmailDto;
@@ -125,7 +126,7 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
     });
 
     try {
-      const result = await this.transporter.sendMail({
+      const { messageId } = await this.transporter.sendMail({
         from: this.fromEmail,
         to,
         subject,
@@ -133,7 +134,9 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
         text,
       });
 
-      console.log(result);
+      if (!messageId) {
+        throw new Error('Failed to send email.');
+      }
     } catch (error) {
       console.error('❌ Failed to send email:', error);
     }

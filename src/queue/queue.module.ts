@@ -2,6 +2,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
 import { QUEUES } from './constants/queue.constants';
 import { EmailProducer } from './producers/email.producer';
+import { EmailProcessor } from './processors/email.processor';
 
 @Module({
   imports: [
@@ -9,7 +10,7 @@ import { EmailProducer } from './producers/email.producer';
       name: QUEUES.EMAIL,
     }),
   ],
-  providers: [EmailProducer],
+  providers: [EmailProducer, EmailProcessor],
   exports: [EmailProducer],
 })
 export class QueueModule {}

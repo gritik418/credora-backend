@@ -32,6 +32,7 @@
     "bullmq": "^6.1.2",
     "cookie-parser": "^1.4.7",
     "handlebars": "^4.7.9",
+    "ioredis": "^6.0.0",
     "nodemailer": "^9.0.5",
     "pg": "^8.22.0",
     "reflect-metadata": "^0.2.2",
