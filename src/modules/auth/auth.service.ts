@@ -16,6 +16,8 @@ import { Request, Response } from 'express';
 import { AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant';
 import cookieOptions from 'src/common/constants/cookie-options.constant';
 import { User } from 'generated/prisma/client';
+import { EmailProducer } from 'src/queue/producers/email.producer';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
@@ -23,13 +25,14 @@ export class AuthService {
     private readonly prismaService: PrismaService,
     private readonly hashingService: HashingService,
     private readonly jwtService: JwtService,
+    private readonly emailProducer: EmailProducer,
+    private readonly configService: ConfigService,
   ) {}
 
   private getProviderName(provider: AuthProvider) {
     return provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase();
   }
 
-  // TODO: Send email verification mail, update isEmailVerified to false by default
   async register(data: RegisterDto) {
     if (data.role === UserRole.ADMIN) {
       throw new BadRequestException(
@@ -95,8 +98,8 @@ export class AuthService {
           role: data.role,
           password: hashedPassword,
 
-          isEmailVerified: true, // TODO: change, only true after email verification
-          isActive: true, // TODO: change, only true after email verification
+          isEmailVerified: false,
+          isActive: false,
 
           emailVerificationToken: hashedEmailVerificationToken,
           emailVerificationTokenExpiry: verificationTokenExpiry,
@@ -121,8 +124,8 @@ export class AuthService {
           password: hashedPassword,
           role: data.role,
 
-          isEmailVerified: true, // TODO: change, only true after email verification
-          isActive: true, // TODO: change, only true after email verification
+          isEmailVerified: false,
+          isActive: false,
 
           emailVerificationToken: hashedEmailVerificationToken,
           emailVerificationTokenExpiry: verificationTokenExpiry,
@@ -136,6 +139,15 @@ export class AuthService {
         },
       });
     }
+
+    const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/auth/verify-email?token=${emailVerificationToken}`;
+
+    await this.emailProducer.sendUserVerificationEmail({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      verificationLink,
+    });
 
     return {
       success: true,

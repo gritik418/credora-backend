@@ -13,7 +13,9 @@ services:
       - .env
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_health
+      redis:
+        condition: service_health
     volumes:
       - .:/app
       - /app/node_modules
@@ -37,5 +39,20 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: credora-redis
+    ports:
+      - '6379:6379'
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD-SHELL', 'redis-cli ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   postgres_data:
+  redis_data:
