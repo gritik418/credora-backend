@@ -18,6 +18,7 @@ import cookieOptions from 'src/common/constants/cookie-options.constant';
 import { User } from 'generated/prisma/client';
 import { EmailProducer } from 'src/queue/producers/email.producer';
 import { ConfigService } from '@nestjs/config';
+import VerifyEmailDto from './dto/verify-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -140,7 +141,7 @@ export class AuthService {
       });
     }
 
-    const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/auth/verify-email?token=${emailVerificationToken}`;
+    const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/auth/verify-email?uid=${user.id}&token=${emailVerificationToken}`;
 
     await this.emailProducer.sendUserVerificationEmail({
       email: user.email,
@@ -216,6 +217,76 @@ export class AuthService {
     return {
       success: true,
       message: 'Logged in successfully.',
+      user: {
+        id: user.id,
+        avatar: user.avatar || '',
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    };
+  }
+
+  async verifyEmail(data: VerifyEmailDto, res: Response) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: data.uid,
+      },
+      include: {
+        accounts: true,
+      },
+    });
+
+    if (!user) throw new BadRequestException('Invalid verification link.');
+
+    if (
+      !user.emailVerificationToken ||
+      !user.emailVerificationTokenExpiry ||
+      user.emailVerificationTokenExpiry < new Date()
+    ) {
+      throw new BadRequestException('Token has expired.');
+    }
+
+    const credentialsProvider = user.accounts.find(
+      (a) => a.provider === AuthProvider.CREDENTIALS,
+    );
+
+    if (!credentialsProvider) {
+      throw new BadRequestException('Invalid token.');
+    }
+
+    const isValid = await this.hashingService.compareValues(
+      data.token,
+      user.emailVerificationToken,
+    );
+
+    if (!isValid) throw new BadRequestException('Invalid token.');
+
+    await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        isEmailVerified: true,
+        isActive: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiry: null,
+      },
+    });
+
+    const payload: JwtPayload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token: string = this.jwtService.sign(payload);
+
+    res.cookie(AUTH_COOKIE_NAME, token, cookieOptions);
+
+    return {
+      success: true,
+      message: 'Email verified successfully.',
       user: {
         id: user.id,
         avatar: user.avatar || '',

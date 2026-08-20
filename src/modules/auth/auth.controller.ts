@@ -17,6 +17,8 @@ import LoginDto from './dto/login.dto';
 import { Request, Response } from 'express';
 import LoginSchema from './schemas/login.schema';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
+import VerifyEmailSchema from './schemas/verify-email.schema';
+import VerifyEmailDto from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -37,6 +39,15 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.login(data, res);
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Body(new ZodValidationPipe(VerifyEmailSchema)) data: VerifyEmailDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.verifyEmail(data, res);
   }
 
   @Get('me')
