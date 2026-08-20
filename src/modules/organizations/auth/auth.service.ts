@@ -14,6 +14,8 @@ import { JwtService } from '@nestjs/jwt';
 import { OrgJwtPayload } from './types/org-jwt-payload.type';
 import { ORG_AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant';
 import cookieOptions from 'src/common/constants/cookie-options.constant';
+import { EmailProducer } from 'src/queue/producers/email.producer';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class OrganizationAuthService {
@@ -21,9 +23,10 @@ export class OrganizationAuthService {
     private readonly prismaService: PrismaService,
     private readonly hashingService: HashingService,
     private readonly jwtService: JwtService,
+    private readonly emailProducer: EmailProducer,
+    private readonly configService: ConfigService,
   ) {}
 
-  // TODO: send email verification mail
   async registerOrganization(data: RegisterOrganizationDto) {
     const existingEmail = await this.prismaService.organization.findUnique({
       where: {
@@ -76,11 +79,10 @@ export class OrganizationAuthService {
               password: hashedPassword,
 
               emailVerificationToken: hashedVerificationToken,
-
               emailVerificationTokenExpiry: verificationTokenExpiry,
 
-              isEmailVerified: true, // TODO: change, only true after email verification
-              isActive: true, // TODO: change, only active after email verification
+              isEmailVerified: false,
+              isActive: false,
             },
           })
         : await this.prismaService.organization.create({
@@ -94,13 +96,26 @@ export class OrganizationAuthService {
               password: hashedPassword,
 
               emailVerificationToken: hashedVerificationToken,
-
               emailVerificationTokenExpiry: verificationTokenExpiry,
 
-              isEmailVerified: true, // TODO: change, only true after email verification
-              isActive: true, // TODO: change, only active after email verification
+              isEmailVerified: false,
+              isActive: false,
             },
           });
+
+    const verificationLink: string =
+      this.configService.get<string>('CLIENT_URL') +
+      `/organization/auth/verify-email?oid=${organization.id}&token=${verificationToken}`;
+
+    await this.emailProducer.sendOrganizationVerificationEmail({
+      name: organization.name,
+      description: organization.description || '',
+      email: organization.email,
+      logo: organization.logo || '',
+      website: organization.website || '',
+      slug: organization.slug,
+      verificationLink,
+    });
 
     return {
       success: true,

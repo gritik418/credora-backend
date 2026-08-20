@@ -6,8 +6,8 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
-import { Observable } from 'rxjs';
 import { AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant';
+import { PrismaService } from 'src/database/prisma.service';
 import { JwtPayload } from 'src/modules/auth/types/jwt-payload.type';
 
 declare module 'express' {
@@ -18,9 +18,12 @@ declare module 'express' {
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prismaService: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const request = context.switchToHttp().getRequest<Request>();
 
@@ -36,6 +39,28 @@ export class AuthGuard implements CanActivate {
 
       if (!payload.id || !payload.email || !payload.role)
         throw new UnauthorizedException('Unauthorized.');
+
+      const user = await this.prismaService.user.findUnique({
+        where: {
+          id: payload.id,
+        },
+        select: {
+          isEmailVerified: true,
+          isActive: true,
+        },
+      });
+
+      if (!user) throw new UnauthorizedException('Invalid credentials.');
+
+      if (!user?.isEmailVerified)
+        throw new UnauthorizedException(
+          'Your email is not verified. Please verify your email to continue.',
+        );
+
+      if (!user?.isActive)
+        throw new UnauthorizedException(
+          'Your account is not active. Please contact the administrator.',
+        );
 
       request.user = payload;
 

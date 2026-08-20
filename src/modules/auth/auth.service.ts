@@ -219,7 +219,7 @@ export class AuthService {
       message: 'Logged in successfully.',
       user: {
         id: user.id,
-        avatar: user.avatar || '',
+        avatar: user.avatar,
         name: user.name,
         email: user.email,
         role: user.role,
@@ -289,7 +289,7 @@ export class AuthService {
       message: 'Email verified successfully.',
       user: {
         id: user.id,
-        avatar: user.avatar || '',
+        avatar: user.avatar,
         name: user.name,
         email: user.email,
         role: user.role,

@@ -11,6 +11,7 @@ import UserVerificationEmailDto from '../dto/email/user-verification.dto';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from '@nestjs/config';
 import EMAIL_JOB_NAMES from '../constants/email-job-names.constants';
+import OrganizationVerificationEmailDto from '../dto/email/organization-verification.dto';
 
 @Processor(QUEUES.EMAIL)
 export class EmailProcessor extends WorkerHost implements OnModuleInit {
@@ -84,14 +85,22 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
   async process(job: Job): Promise<any> {
     switch (job.name) {
       case EMAIL_JOB_NAMES.USER_VERIFICATION:
-        const data = job.data as UserVerificationEmailDto;
-
         await this.sendEmail({
-          to: data.email,
+          to: job.data.email,
           subject: 'Verify your Credora account',
           text: 'Please verify your email address to complete your Credora account setup.',
-          data,
+          data: job.data,
           templateName: templateNames.userVerification,
+        });
+        break;
+
+      case EMAIL_JOB_NAMES.ORGANIZATION_VERIFICATION:
+        await this.sendEmail({
+          to: job.data.email,
+          subject: 'Verify your organization account',
+          text: 'Please verify your organization email address to complete your organization account setup.',
+          data: job.data,
+          templateName: templateNames.organizationVerification,
         });
         break;
 
