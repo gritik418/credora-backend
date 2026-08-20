@@ -231,6 +231,7 @@ export class AuthService {
     const user = await this.prismaService.user.findUnique({
       where: {
         id: data.uid,
+        isEmailVerified: false,
       },
       include: {
         accounts: true,
@@ -271,6 +272,7 @@ export class AuthService {
         isActive: true,
         emailVerificationToken: null,
         emailVerificationTokenExpiry: null,
+        lastLoginAt: new Date(),
       },
     });
 

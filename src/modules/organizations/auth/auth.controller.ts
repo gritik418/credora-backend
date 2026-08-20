@@ -13,6 +13,8 @@ import RegisterOrganizationSchema from './schemas/register-organization.schema';
 import OrganizationLoginSchema from './schemas/organization-login.schema';
 import OrganizationLoginDto from './dto/organization-login.dto';
 import { Response } from 'express';
+import VerifyOrganizationSchema from './schemas/verify-organization.schema';
+import VerifyOrganizationDto from './dto/verify-organization.dto';
 
 @Controller('organizations/auth')
 export class OrganizationAuthController {
@@ -37,5 +39,15 @@ export class OrganizationAuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.organizationAuthService.organizationLogin(data, res);
+  }
+
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Body(new ZodValidationPipe(VerifyOrganizationSchema))
+    data: VerifyOrganizationDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.organizationAuthService.verifyOrganizationAccount(data, res);
   }
 }

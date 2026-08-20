@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -16,6 +17,7 @@ import { ORG_AUTH_COOKIE_NAME } from 'src/common/constants/cookie-names.constant
 import cookieOptions from 'src/common/constants/cookie-options.constant';
 import { EmailProducer } from 'src/queue/producers/email.producer';
 import { ConfigService } from '@nestjs/config';
+import VerifyOrganizationDto from './dto/verify-organization.dto';
 
 @Injectable()
 export class OrganizationAuthService {
@@ -122,6 +124,68 @@ export class OrganizationAuthService {
       message:
         'Organization registered successfully. Please check your email and verify your account to continue.',
       organizationId: organization.id,
+    };
+  }
+
+  async verifyOrganizationAccount(data: VerifyOrganizationDto, res: Response) {
+    const organization = await this.prismaService.organization.findUnique({
+      where: {
+        id: data.oid,
+        isEmailVerified: false,
+      },
+    });
+
+    if (!organization)
+      throw new BadRequestException('Invalid verification link.');
+
+    if (
+      !organization.emailVerificationToken ||
+      !organization.emailVerificationTokenExpiry
+    )
+      throw new BadRequestException('Invalid verification link.');
+
+    if (new Date() > organization.emailVerificationTokenExpiry)
+      throw new BadRequestException('Verification link has expired.');
+
+    const isTokenValid = await this.hashingService.compareValues(
+      data.token,
+      organization.emailVerificationToken,
+    );
+
+    if (!isTokenValid) throw new BadRequestException('Invalid token.');
+
+    await this.prismaService.organization.update({
+      where: { id: organization.id },
+      data: {
+        isEmailVerified: true,
+        isActive: true,
+        emailVerificationToken: null,
+        emailVerificationTokenExpiry: null,
+        lastLoginAt: new Date(),
+      },
+    });
+
+    const payload: OrgJwtPayload = {
+      email: organization.email,
+      id: organization.id,
+    };
+
+    const token: string = this.jwtService.sign(payload);
+
+    res.cookie(ORG_AUTH_COOKIE_NAME, token, cookieOptions);
+
+    return {
+      success: true,
+      message: 'Organization verified successfully.',
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        email: organization.email,
+        slug: organization.slug,
+        logo: organization.logo,
+        website: organization.website,
+        description: organization.description,
+      },
     };
   }
 
