@@ -26,7 +26,6 @@ export class OrganizationInvitesService {
     private readonly emailProducer: EmailProducer,
   ) {}
 
-  // TODO: send mail
   async sendInvite(data: SendInviteDto, req: Request) {
     const userId = req.user.id;
     const organizationId = req.params.organizationId as string;

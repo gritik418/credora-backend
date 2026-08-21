@@ -86,10 +86,10 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
     switch (job.name) {
       case EMAIL_JOB_NAMES.USER_VERIFICATION:
         await this.sendEmail({
-          to: data.email,
+          to: job.data.email,
           subject: 'Verify your Credora account',
           text: 'Please verify your email address to complete your Credora account setup.',
-          data,
+          data: job.data,
           templateName: templateNames.userVerification,
         });
         break;
