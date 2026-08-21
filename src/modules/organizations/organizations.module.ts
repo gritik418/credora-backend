@@ -8,9 +8,21 @@ import { OrganizationInvitesService } from './invites/invites.service';
 import { HashingModule } from 'src/common/hashing/hashing.module';
 import { JwtModule } from '@nestjs/jwt';
 import { QueueModule } from 'src/queue/queue.module';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [HashingModule, JwtModule, QueueModule],
+  imports: [
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        return {
+          secret: configService.get<string>('JWT_SECRET'),
+        };
+      },
+    }),
+    HashingModule,
+    QueueModule,
+  ],
   controllers: [
     OrganizationsController,
     OrganizationAuthController,

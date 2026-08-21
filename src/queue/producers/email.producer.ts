@@ -5,6 +5,7 @@ import { JobsOptions, Queue } from 'bullmq';
 import UserVerificationEmailDto from '../dto/email/user-verification.dto';
 import EMAIL_JOB_NAMES from '../constants/email-job-names.constants';
 import OrganizationVerificationEmailDto from '../dto/email/organization-verification.dto';
+import OrganizationInviteDto from '../dto/email/organization-invite.dto';
 
 @Injectable()
 export class EmailProducer {
@@ -30,6 +31,14 @@ export class EmailProducer {
   ) {
     await this.emailQueue.add(
       EMAIL_JOB_NAMES.ORGANIZATION_VERIFICATION,
+      data,
+      this.jobOptions,
+    );
+  }
+
+  async sendOrganizationInviteEmail(data: OrganizationInviteDto) {
+    await this.emailQueue.add(
+      EMAIL_JOB_NAMES.ORGANIZATION_INVITE,
       data,
       this.jobOptions,
     );

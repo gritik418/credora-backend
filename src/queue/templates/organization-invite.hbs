@@ -1,0 +1,594 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+    <meta http-equiv='X-UA-Compatible' content='IE=edge' />
+
+    <title>You're invited to join {{organization.name}} on Credora</title>
+  </head>
+
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      min-width: 100%;
+      background-color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, sans-serif;
+      color: #0f172a;
+    "
+  >
+    <table
+      role='presentation'
+      width='100%'
+      cellpadding='0'
+      cellspacing='0'
+      border='0'
+      style='background-color: #f1f5f9; padding: 40px 16px;'
+    >
+      <tr>
+        <td align='center'>
+
+          <!-- Main Container -->
+          <table
+            role='presentation'
+            width='100%'
+            cellpadding='0'
+            cellspacing='0'
+            border='0'
+            style='
+              max-width: 620px;
+              background-color: #ffffff;
+              border-radius: 14px;
+              overflow: hidden;
+              border: 1px solid #e2e8f0;
+              box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+            '
+          >
+
+            <!-- Platform Header -->
+            <tr>
+              <td
+                style='
+                  padding: 28px 40px;
+                  border-bottom: 1px solid #e2e8f0;
+                  background-color: #ffffff;
+                '
+              >
+                <table
+                  role='presentation'
+                  width='100%'
+                  cellpadding='0'
+                  cellspacing='0'
+                  border='0'
+                >
+                  <tr>
+                    <td align='left'>
+                      <img
+                        src='{{logoUrl}}'
+                        alt='Credora'
+                        style='
+                          display: block;
+                          width: 110px;
+                          height: auto;
+                          border-radius: 6px;
+                        '
+                      />
+                    </td>
+
+                    <td
+                      align='right'
+                      style='
+                        font-size: 12px;
+                        color: #64748b;
+                        font-weight: 500;
+                      '
+                    >
+                      Organization Invitation
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Invitation Header -->
+            <tr>
+              <td
+                style='
+                  padding: 42px 40px 32px;
+                  background: linear-gradient(
+                    180deg,
+                    #f8fafc 0%,
+                    #ffffff 100%
+                  );
+                  text-align: center;
+                '
+              >
+
+                <!-- Organization Logo -->
+                {{#if organization.logo}}
+                  <img
+                    src='{{organization.logo}}'
+                    alt='{{organization.name}}'
+                    style='
+                      display: block;
+                      width: 76px;
+                      height: 76px;
+                      object-fit: contain;
+                      margin: 0 auto 20px;
+                      border-radius: 14px;
+                      border: 1px solid #e2e8f0;
+                      background-color: #ffffff;
+                    '
+                  />
+                {{else}}
+                  <div
+                    style='
+                      width: 76px;
+                      height: 76px;
+                      margin: 0 auto 20px;
+                      border-radius: 14px;
+                      background-color: #eff6ff;
+                      border: 1px solid #dbeafe;
+                      line-height: 76px;
+                      font-size: 30px;
+                      font-weight: 700;
+                      color: #2563eb;
+                    '
+                  >
+                    {{organization.initial}}
+                  </div>
+                {{/if}}
+
+                <p
+                  style='
+                    margin: 0 0 10px;
+                    font-size: 12px;
+                    line-height: 1.4;
+                    color: #2563eb;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.8px;
+                  '
+                >
+                  You're invited
+                </p>
+
+                <h1
+                  style='
+                    margin: 0 0 12px;
+                    font-size: 28px;
+                    line-height: 1.25;
+                    font-weight: 700;
+                    color: #0f172a;
+                    letter-spacing: -0.5px;
+                  '
+                >
+                  Join
+                  {{organization.name}}
+                </h1>
+
+                <p
+                  style='
+                    margin: 0 auto;
+                    max-width: 470px;
+                    font-size: 15px;
+                    line-height: 1.6;
+                    color: #64748b;
+                  '
+                >
+                  You've been invited to join
+                  <strong style='color: #334155;'>
+                    {{organization.name}}
+                  </strong>
+                  on Credora.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Invited By -->
+            <tr>
+              <td style='padding: 0 40px 28px;'>
+                <table
+                  role='presentation'
+                  width='100%'
+                  cellpadding='0'
+                  cellspacing='0'
+                  border='0'
+                  style='
+                    background-color: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 10px;
+                  '
+                >
+                  <tr>
+                    <td style='padding: 20px 22px;'>
+
+                      <p
+                        style='
+                          margin: 0 0 16px;
+                          font-size: 11px;
+                          line-height: 1.4;
+                          color: #64748b;
+                          font-weight: 700;
+                          text-transform: uppercase;
+                          letter-spacing: 0.7px;
+                        '
+                      >
+                        Invitation details
+                      </p>
+
+                      <table
+                        role='presentation'
+                        width='100%'
+                        cellpadding='0'
+                        cellspacing='0'
+                        border='0'
+                      >
+                        <tr>
+                          <td valign='middle' style='width: 48px;'>
+                            {{#if invitedBy.avatar}}
+                              <img
+                                src='{{invitedBy.avatar}}'
+                                alt='{{invitedBy.name}}'
+                                style='
+                                  display: block;
+                                  width: 40px;
+                                  height: 40px;
+                                  object-fit: cover;
+                                  border-radius: 50%;
+                                  border: 1px solid #e2e8f0;
+                                '
+                              />
+                            {{else}}
+                              <div
+                                style='
+                                  width: 40px;
+                                  height: 40px;
+                                  border-radius: 50%;
+                                  background-color: #dbeafe;
+                                  color: #2563eb;
+                                  font-size: 15px;
+                                  font-weight: 700;
+                                  line-height: 40px;
+                                  text-align: center;
+                                '
+                              >
+                                {{invitedBy.initial}}
+                              </div>
+                            {{/if}}
+                          </td>
+
+                          <td
+                            valign='middle'
+                            style='
+                              padding-left: 12px;
+                            '
+                          >
+                            <p
+                              style='
+                                margin: 0 0 3px;
+                                font-size: 14px;
+                                line-height: 1.4;
+                                color: #0f172a;
+                                font-weight: 600;
+                              '
+                            >
+                              {{invitedBy.name}}
+                            </p>
+
+                            <p
+                              style='
+                                margin: 0;
+                                font-size: 12px;
+                                line-height: 1.4;
+                                color: #64748b;
+                              '
+                            >
+                              {{invitedBy.email}}
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Role -->
+            <tr>
+              <td style='padding: 0 40px 28px;'>
+                <table
+                  role='presentation'
+                  width='100%'
+                  cellpadding='0'
+                  cellspacing='0'
+                  border='0'
+                  style='
+                    border: 1px solid #dbeafe;
+                    background-color: #eff6ff;
+                    border-radius: 10px;
+                  '
+                >
+                  <tr>
+                    <td
+                      style='
+                        padding: 18px 20px;
+                        text-align: center;
+                      '
+                    >
+                      <p
+                        style='
+                          margin: 0 0 6px;
+                          font-size: 11px;
+                          color: #64748b;
+                          font-weight: 700;
+                          text-transform: uppercase;
+                          letter-spacing: 0.7px;
+                        '
+                      >
+                        Your role
+                      </p>
+
+                      <p
+                        style='
+                          margin: 0;
+                          font-size: 18px;
+                          line-height: 1.4;
+                          color: #1d4ed8;
+                          font-weight: 700;
+                        '
+                      >
+                        {{role}}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- CTA -->
+            <tr>
+              <td
+                style='
+                  padding: 4px 40px 36px;
+                  text-align: center;
+                '
+              >
+                <h2
+                  style='
+                    margin: 0 0 10px;
+                    font-size: 20px;
+                    line-height: 1.3;
+                    font-weight: 700;
+                    color: #0f172a;
+                  '
+                >
+                  Ready to join?
+                </h2>
+
+                <p
+                  style='
+                    margin: 0 auto 24px;
+                    max-width: 460px;
+                    font-size: 14px;
+                    line-height: 1.6;
+                    color: #64748b;
+                  '
+                >
+                  Accept the invitation to join your organization and start
+                  collaborating on Credora.
+                </p>
+
+                <!-- Primary CTA -->
+                <table
+                  role='presentation'
+                  cellpadding='0'
+                  cellspacing='0'
+                  border='0'
+                  style='margin: 0 auto 20px;'
+                >
+                  <tr>
+                    <td
+                      align='center'
+                      style='
+                        border-radius: 8px;
+                        background-color: #2563eb;
+                      '
+                    >
+                      <a
+                        href='{{invitationLink}}'
+                        style='
+                          display: inline-block;
+                          padding: 14px 38px;
+                          font-size: 14px;
+                          line-height: 1.5;
+                          font-weight: 600;
+                          color: #ffffff;
+                          text-decoration: none;
+                          border-radius: 8px;
+                        '
+                      >
+                        Accept Invitation
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Expiry -->
+                <div
+                  style='
+                    display: inline-block;
+                    padding: 9px 14px;
+                    background-color: #fffbeb;
+                    border: 1px solid #fde68a;
+                    border-radius: 7px;
+                  '
+                >
+                  <p
+                    style='
+                      margin: 0;
+                      font-size: 12px;
+                      line-height: 1.5;
+                      color: #92400e;
+                    '
+                  >
+                    <strong>Invitation expires:</strong>
+                    in 7 days
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Fallback Link -->
+            <tr>
+              <td style='padding: 0 40px 36px;'>
+                <div
+                  style='
+                    padding: 18px 20px;
+                    background-color: #f8fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                  '
+                >
+                  <p
+                    style='
+                      margin: 0 0 8px;
+                      font-size: 11px;
+                      line-height: 1.4;
+                      color: #64748b;
+                      font-weight: 700;
+                      text-transform: uppercase;
+                      letter-spacing: 0.6px;
+                    '
+                  >
+                    Button not working?
+                  </p>
+
+                  <p
+                    style="
+                      margin: 0;
+                      font-size: 11px;
+                      line-height: 1.6;
+                      color: #475569;
+                      word-break: break-all;
+                      font-family: 'SF Mono', Monaco, 'Courier New',
+                        monospace;
+                    "
+                  >
+                    {{invitationLink}}
+                  </p>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Organization Website -->
+            {{#if organization.website}}
+              <tr>
+                <td
+                  style='
+                    padding: 0 40px 32px;
+                    text-align: center;
+                  '
+                >
+                  <a
+                    href='{{organization.website}}'
+                    style='
+                      font-size: 13px;
+                      color: #2563eb;
+                      text-decoration: none;
+                      font-weight: 500;
+                    '
+                  >
+                    Visit
+                    {{organization.name}}
+                  </a>
+                </td>
+              </tr>
+            {{/if}}
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style='
+                  padding: 28px 40px;
+                  background-color: #f8fafc;
+                  border-top: 1px solid #e2e8f0;
+                  text-align: center;
+                '
+              >
+                <p
+                  style='
+                    margin: 0 0 12px;
+                    font-size: 12px;
+                    line-height: 1.6;
+                    color: #64748b;
+                  '
+                >
+                  This invitation was sent through Credora by
+                  {{invitedBy.name}}.
+                </p>
+
+                <div style='margin-bottom: 12px;'>
+                  <a
+                    href='{{clientUrl}}'
+                    style='
+                      margin: 0 8px;
+                      font-size: 12px;
+                      color: #64748b;
+                      text-decoration: none;
+                    '
+                  >
+                    Credora
+                  </a>
+
+                  <span style='color: #cbd5e1;'>•</span>
+
+                  <a
+                    href='{{clientUrl}}/privacy'
+                    style='
+                      margin: 0 8px;
+                      font-size: 12px;
+                      color: #64748b;
+                      text-decoration: none;
+                    '
+                  >
+                    Privacy
+                  </a>
+
+                  <span style='color: #cbd5e1;'>•</span>
+
+                  <a
+                    href='{{clientUrl}}/terms'
+                    style='
+                      margin: 0 8px;
+                      font-size: 12px;
+                      color: #64748b;
+                      text-decoration: none;
+                    '
+                  >
+                    Terms
+                  </a>
+                </div>
+
+                <p
+                  style='
+                    margin: 0;
+                    font-size: 11px;
+                    color: #94a3b8;
+                  '
+                >
+                  © 2026 Credora. All rights reserved.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

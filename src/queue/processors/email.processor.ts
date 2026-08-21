@@ -86,10 +86,10 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
     switch (job.name) {
       case EMAIL_JOB_NAMES.USER_VERIFICATION:
         await this.sendEmail({
-          to: job.data.email,
+          to: data.email,
           subject: 'Verify your Credora account',
           text: 'Please verify your email address to complete your Credora account setup.',
-          data: job.data,
+          data,
           templateName: templateNames.userVerification,
         });
         break;
@@ -104,9 +104,18 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
         });
         break;
 
+      case EMAIL_JOB_NAMES.ORGANIZATION_INVITE:
+        await this.sendEmail({
+          to: job.data.recipientEmail,
+          subject: `${job.data.invitedBy.name} invited you to join ${job.data.organization.name} on Credora`,
+          text: `${job.data.invitedBy.name} invited you to join ${job.data.organization.name} on Credora`,
+          data: job.data,
+          templateName: templateNames.organizationInvite,
+        });
+        break;
+
       default:
         throw new Error(`Unhandled email job: ${job.name}`);
-        break;
     }
   }
 

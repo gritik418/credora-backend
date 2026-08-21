@@ -14,12 +14,16 @@ import {
 } from 'generated/prisma/enums';
 import { randomBytes } from 'crypto';
 import { HashingService } from 'src/common/hashing/hashing.service';
+import { ConfigService } from '@nestjs/config';
+import { EmailProducer } from 'src/queue/producers/email.producer';
 
 @Injectable()
 export class OrganizationInvitesService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly hashingService: HashingService,
+    private readonly configService: ConfigService,
+    private readonly emailProducer: EmailProducer,
   ) {}
 
   // TODO: send mail
@@ -31,12 +35,24 @@ export class OrganizationInvitesService {
     if (!organizationId)
       throw new BadRequestException('Organization id is required.');
 
+    const organization = await this.prismaService.organization.findUnique({
+      where: { id: organizationId },
+      select: {
+        name: true,
+        logo: true,
+        website: true,
+      },
+    });
+
+    if (!organization) throw new BadRequestException('Organization not found.');
+
     const invitedBy = await this.prismaService.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, isEmailVerified: true },
       select: {
         id: true,
         name: true,
         email: true,
+        avatar: true,
         isActive: true,
         isEmailVerified: true,
         organizationMembers: {
@@ -57,8 +73,10 @@ export class OrganizationInvitesService {
       },
     });
 
-    if (!invitedBy)
-      throw new ForbiddenException('You are not authorized for this action.');
+    if (!invitedBy) throw new UnauthorizedException('Unauthorized.');
+
+    if (!invitedBy.isActive)
+      throw new ForbiddenException('Your account is not active.');
 
     const member = invitedBy.organizationMembers.find(
       (member) => member.organization.id === organizationId,
@@ -178,6 +196,26 @@ export class OrganizationInvitesService {
         status: OrganizationInviteStatus.PENDING,
         token: hashedToken,
       },
+    });
+
+    const invitationLink: string = `${this.configService.get<string>('CLIENT_URL')}/organization/${organizationId}/invites?token=${token}`;
+
+    await this.emailProducer.sendOrganizationInviteEmail({
+      invitationLink,
+      invitedBy: {
+        name: invitedBy.name,
+        email: invitedBy.email,
+        avatar: invitedBy.avatar || '',
+        initial: invitedBy.name.charAt(0).toUpperCase(),
+      },
+      recipientEmail: data.email,
+      organization: {
+        name: organization.name,
+        logo: organization.logo || '',
+        website: organization.website || '',
+        initial: organization.name.charAt(0).toUpperCase(),
+      },
+      role: data.role,
     });
 
     return {

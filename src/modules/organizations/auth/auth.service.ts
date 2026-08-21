@@ -105,16 +105,14 @@ export class OrganizationAuthService {
             },
           });
 
-    const verificationLink: string =
-      this.configService.get<string>('CLIENT_URL') +
-      `/organization/auth/verify-email?oid=${organization.id}&token=${verificationToken}`;
+    const verificationLink: string = `${this.configService.get<string>('CLIENT_URL')}/organization/auth/verify-email?oid=${organization.id}&token=${verificationToken}`;
 
     await this.emailProducer.sendOrganizationVerificationEmail({
       name: organization.name,
-      description: organization.description || '',
+      description: organization.description ?? '',
       email: organization.email,
-      logo: organization.logo || '',
-      website: organization.website || '',
+      logo: organization.logo ?? '',
+      website: organization.website ?? '',
       slug: organization.slug,
       verificationLink,
     });
