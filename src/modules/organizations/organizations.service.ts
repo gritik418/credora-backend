@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -11,6 +12,7 @@ import { EmailProducer } from 'src/queue/producers/email.producer';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { OrganizationMemberRole } from 'generated/prisma/enums';
+import VerifyOrganizationDto from './dto/verify-organization.dto';
 
 @Injectable()
 export class OrganizationsService {
@@ -161,6 +163,56 @@ export class OrganizationsService {
       success: true,
       message: 'Organization created successfully.',
       organizationId: organization.id,
+    };
+  }
+
+  async verifyOrganizationEmail(data: VerifyOrganizationDto) {
+    const organization = await this.prismaService.organization.findUnique({
+      where: {
+        id: data.oid,
+        isEmailVerified: false,
+      },
+    });
+
+    if (!organization) {
+      throw new BadRequestException('Invalid verification token.');
+    }
+
+    if (
+      !organization.emailVerificationToken ||
+      !organization.emailVerificationTokenExpiry
+    ) {
+      throw new BadRequestException('Invalid verification token.');
+    }
+
+    if (new Date() > organization.emailVerificationTokenExpiry)
+      throw new BadRequestException('Verification token has expired.');
+
+    const isTokenValid: boolean = await this.hashingService.compareValues(
+      data.token,
+      organization.emailVerificationToken,
+    );
+
+    if (!isTokenValid) {
+      throw new BadRequestException('Invalid or expired verification token.');
+    }
+
+    await this.prismaService.organization.update({
+      where: {
+        id: data.oid,
+      },
+      data: {
+        isEmailVerified: true,
+        isActive: true,
+
+        emailVerificationToken: null,
+        emailVerificationTokenExpiry: null,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Organization email verified successfully.',
     };
   }
 }
