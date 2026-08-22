@@ -9,6 +9,7 @@ import { Request } from 'express';
 import { PrismaService } from 'src/database/prisma.service';
 import CreateWorkspaceDto from './dto/create-workspace.dto';
 import { OrganizationMemberRole } from 'generated/prisma/enums';
+import { Workspace } from 'generated/prisma/browser';
 
 @Injectable()
 export class WorkspacesService {
@@ -85,6 +86,64 @@ export class WorkspacesService {
       success: true,
       message: 'Workspace created successfully.',
       workspace,
+    };
+  }
+
+  async getWorkspaces(organizationId: string, req: Request) {
+    const userId: string = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const organization = await this.prismaService.organization.findUnique({
+      where: {
+        id: organizationId,
+      },
+      include: {
+        organizationMembers: {
+          where: {
+            userId,
+          },
+        },
+      },
+    });
+
+    if (!organization) throw new NotFoundException('Organization not found.');
+
+    if (!organization.organizationMembers.length)
+      throw new ForbiddenException(
+        'You are not a member of this organization.',
+      );
+
+    const member = organization.organizationMembers[0];
+
+    const isOwnerOrAdmin =
+      member.role === OrganizationMemberRole.OWNER ||
+      member.role === OrganizationMemberRole.ADMIN;
+
+    let workspaces: Workspace[] = [];
+
+    if (isOwnerOrAdmin) {
+      workspaces = await this.prismaService.workspace.findMany({
+        where: {
+          organizationId,
+        },
+      });
+    } else {
+      workspaces = await this.prismaService.workspace.findMany({
+        where: {
+          organizationId,
+          members: {
+            some: {
+              userId,
+            },
+          },
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Workspaces fetched successfully.',
+      workspaces,
     };
   }
 }

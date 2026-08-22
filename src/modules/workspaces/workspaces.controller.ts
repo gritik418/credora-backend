@@ -1,4 +1,14 @@
-import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation/zod-validation.pipe';
@@ -12,6 +22,7 @@ export class WorkspacesController {
   constructor(private readonly workspacesService: WorkspacesService) {}
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async createWorkspace(
     @Param('organizationId') organizationId: string,
     @Body(new ZodValidationPipe(CreateWorkspaceSchema))
@@ -19,5 +30,14 @@ export class WorkspacesController {
     @Req() req: Request,
   ) {
     return this.workspacesService.createWorkspace(organizationId, data, req);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getWorkspaces(
+    @Param('organizationId') organizationId: string,
+    @Req() req: Request,
+  ) {
+    return this.workspacesService.getWorkspaces(organizationId, req);
   }
 }
