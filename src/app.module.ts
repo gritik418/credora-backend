@@ -10,6 +10,7 @@ import { OrganizationInvitesModule } from './modules/organization-invites/organi
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { QueueModule } from './queue/queue.module';
 import { OrganizationMembersModule } from './modules/organization-members/organization-members.module';
+import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { OrganizationMembersModule } from './modules/organization-members/organi
     OrganizationsModule,
     OrganizationInvitesModule,
     OrganizationMembersModule,
+    WorkspacesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
