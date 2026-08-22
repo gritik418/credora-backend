@@ -32,7 +32,8 @@ model User {
 
   accounts Account[]
   organizationMembers OrganizationMember[]
-  organizationInvites OrganizationInvite[]
+  organizationInvites OrganizationInvite[] @relation("OrganizationInvite_invitedBy")
+  organizationInvitesRevoked OrganizationInvite[] @relation("OrganizationInvite_revokedBy")
   workspacesCreated Workspace[]
   workspaceMembers WorkspaceMember[]
   projects Project[]
@@ -117,6 +118,7 @@ model OrganizationInvite {
 
   organizationId String
   invitedById    String
+  revokedById    String?
 
   role OrganizationMemberRole @default(MEMBER)
   status OrganizationInviteStatus @default(PENDING)
@@ -131,7 +133,8 @@ model OrganizationInvite {
   updatedAt DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  invitedBy User @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedBy User @relation("OrganizationInvite_invitedBy", fields: [invitedById], references: [id], onDelete: Cascade)
+  revokedBy User? @relation("OrganizationInvite_revokedBy", fields: [revokedById], references: [id], onDelete: SetNull)
   
 
   @@index([organizationId])

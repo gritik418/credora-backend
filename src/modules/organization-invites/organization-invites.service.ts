@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
@@ -221,6 +222,70 @@ export class OrganizationInvitesService {
       success: true,
       message: 'Invite sent successfully.',
       inviteId: invite.id,
+    };
+  }
+
+  async revokeInvite(inviteId: string, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    if (!inviteId) throw new BadRequestException('Invite id is required.');
+
+    const invite = await this.prismaService.organizationInvite.findUnique({
+      where: { id: inviteId },
+    });
+
+    if (!invite) throw new NotFoundException('Invite not found.');
+
+    if (invite.status !== OrganizationInviteStatus.PENDING)
+      throw new BadRequestException('Invite is not active. Cannot revoke it.');
+
+    const member = await this.prismaService.organizationMember.findFirst({
+      where: {
+        userId: userId,
+        organizationId: invite.organizationId,
+      },
+      select: {
+        id: true,
+        role: true,
+      },
+    });
+
+    if (!member)
+      throw new ForbiddenException(
+        'You are not a member of this organization.',
+      );
+
+    if (
+      member.role !== OrganizationMemberRole.OWNER &&
+      member.role !== OrganizationMemberRole.ADMIN &&
+      member.role !== OrganizationMemberRole.RECRUITER &&
+      member.role !== OrganizationMemberRole.MANAGER
+    )
+      throw new ForbiddenException('You are not authorized to revoke invites.');
+
+    if (
+      member.role !== OrganizationMemberRole.OWNER &&
+      member.role !== OrganizationMemberRole.ADMIN &&
+      invite.role !== OrganizationMemberRole.MEMBER
+    )
+      throw new ForbiddenException(
+        'You are not authorized to revoke this invite.',
+      );
+
+    await this.prismaService.organizationInvite.update({
+      where: { id: inviteId },
+      data: {
+        status: OrganizationInviteStatus.REVOKED,
+        revokedAt: new Date(),
+        revokedById: userId,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Invite revoked successfully.',
     };
   }
 }
