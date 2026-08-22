@@ -27,6 +27,61 @@ export class OrganizationInvitesService {
     private readonly emailProducer: EmailProducer,
   ) {}
 
+  async getInvites(organizationId: string, req: Request) {
+    const userId = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const member = await this.prismaService.organizationMember.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: userId,
+          organizationId: organizationId,
+        },
+      },
+      select: {
+        role: true,
+        isActive: true,
+      },
+    });
+
+    if (!member)
+      throw new ForbiddenException(
+        'You are not a member of this organization.',
+      );
+
+    if (!member.isActive)
+      throw new ForbiddenException(
+        'Your membership is not active. Please contact your organization administrator.',
+      );
+
+    if (
+      member.role !== OrganizationMemberRole.OWNER &&
+      member.role !== OrganizationMemberRole.ADMIN &&
+      member.role !== OrganizationMemberRole.RECRUITER &&
+      member.role !== OrganizationMemberRole.MANAGER
+    )
+      throw new ForbiddenException('You are not authorized to view invites.');
+
+    const invites = await this.prismaService.organizationInvite.findMany({
+      where: {
+        organizationId: organizationId,
+      },
+      select: {
+        id: true,
+        email: true,
+        role: true,
+        status: true,
+        expiresAt: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Invites fetched successfully.',
+      invites,
+    };
+  }
+
   async sendInvite(data: SendInviteDto, req: Request) {
     const userId = req.user.id;
     const organizationId = req.params.organizationId as string;

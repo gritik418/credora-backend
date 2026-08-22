@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -19,6 +20,15 @@ import { Request } from 'express';
 @Controller('organizations/:organizationId/invites')
 export class OrganizationInvitesController {
   constructor(private readonly invitesService: OrganizationInvitesService) {}
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getInvites(
+    @Param('organizationId') organizationId: string,
+    @Req() req: Request,
+  ) {
+    return this.invitesService.getInvites(organizationId, req);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

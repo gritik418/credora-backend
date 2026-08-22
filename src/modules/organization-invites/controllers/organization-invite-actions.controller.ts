@@ -1,10 +1,12 @@
 import {
   Controller,
-  Get,
+  Post,
   Param,
   Redirect,
   Req,
   UseGuards,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { OrganizationInvitesService } from '../organization-invites.service';
 import { Request } from 'express';
@@ -15,8 +17,8 @@ import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 export class OrganizationInviteActionsController {
   constructor(private readonly invitesService: OrganizationInvitesService) {}
 
-  @Get(':token/accept')
-  @Redirect()
+  @Post(':token/accept')
+  @HttpCode(HttpStatus.OK)
   async acceptInvite(
     @Param('inviteId') inviteId: string,
     @Param('token') token: string,
