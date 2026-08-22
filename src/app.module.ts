@@ -9,6 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { OrganizationInvitesModule } from './modules/organization-invites/organization-invites.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { QueueModule } from './queue/queue.module';
+import { OrganizationMembersModule } from './modules/organization-members/organization-members.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { QueueModule } from './queue/queue.module';
     AuthModule,
     OrganizationsModule,
     OrganizationInvitesModule,
+    OrganizationMembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

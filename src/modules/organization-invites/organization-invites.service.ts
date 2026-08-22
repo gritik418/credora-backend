@@ -412,6 +412,9 @@ export class OrganizationInvitesService {
         'Invite has been revoked. Create a new invite to invite the user.',
       );
 
+    if (invite.status !== OrganizationInviteStatus.PENDING)
+      throw new BadRequestException('Only pending invites can be resent.');
+
     if (
       member.role !== OrganizationMemberRole.OWNER &&
       member.role !== OrganizationMemberRole.ADMIN &&
