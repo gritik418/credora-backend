@@ -215,4 +215,34 @@ export class OrganizationsService {
       message: 'Organization email verified successfully.',
     };
   }
+
+  async getOrganizations(req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (!user) throw new UnauthorizedException('Unauthorized.');
+
+    const organizations = await this.prismaService.organization.findMany({
+      where: {
+        organizationMembers: {
+          some: {
+            userId,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Organizations fetched successfully.',
+      organizations,
+    };
+  }
 }
