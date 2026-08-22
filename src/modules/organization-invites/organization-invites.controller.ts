@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
   Req,
   UseGuards,
@@ -26,5 +27,17 @@ export class OrganizationInvitesController {
     @Req() req: Request,
   ) {
     return this.invitesService.sendInvite(data, req);
+  }
+
+  @Post(':inviteId/revoke')
+  @HttpCode(HttpStatus.OK)
+  async revokeInvite(@Param('inviteId') inviteId: string, @Req() req: Request) {
+    return this.invitesService.revokeInvite(inviteId, req);
+  }
+
+  @Post(':inviteId/resend')
+  @HttpCode(HttpStatus.OK)
+  async resendInvite(@Param('inviteId') inviteId: string, @Req() req: Request) {
+    return this.invitesService.resendInvite(inviteId, req);
   }
 }

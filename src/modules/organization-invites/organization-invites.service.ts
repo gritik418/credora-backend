@@ -288,4 +288,132 @@ export class OrganizationInvitesService {
       message: 'Invite revoked successfully.',
     };
   }
+
+  async resendInvite(inviteId: string, req: Request) {
+    const userId: string = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    if (!inviteId) throw new BadRequestException('Invite id is required.');
+
+    const invite = await this.prismaService.organizationInvite.findUnique({
+      where: { id: inviteId },
+      select: {
+        id: true,
+        status: true,
+        expiresAt: true,
+        email: true,
+        organizationId: true,
+        role: true,
+        invitedById: true,
+        organization: {
+          select: {
+            name: true,
+            logo: true,
+            website: true,
+          },
+        },
+      },
+    });
+
+    if (!invite) throw new NotFoundException('Invite not found.');
+
+    const member = await this.prismaService.organizationMember.findFirst({
+      where: {
+        userId: userId,
+        organizationId: invite.organizationId,
+      },
+      select: {
+        id: true,
+        role: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    if (!member)
+      throw new ForbiddenException(
+        'You are not a member of this organization.',
+      );
+
+    if (
+      member.role !== OrganizationMemberRole.OWNER &&
+      member.role !== OrganizationMemberRole.ADMIN &&
+      member.role !== OrganizationMemberRole.RECRUITER &&
+      member.role !== OrganizationMemberRole.MANAGER
+    )
+      throw new ForbiddenException('You are not authorized to resend invites.');
+
+    if (invite.status === OrganizationInviteStatus.ACCEPTED)
+      throw new BadRequestException('Invite has already been accepted.');
+
+    if (invite.status === OrganizationInviteStatus.REVOKED)
+      throw new BadRequestException(
+        'Invite has been revoked. Create a new invite to invite the user.',
+      );
+
+    if (
+      member.role !== OrganizationMemberRole.OWNER &&
+      member.role !== OrganizationMemberRole.ADMIN &&
+      invite.role !== OrganizationMemberRole.MEMBER
+    )
+      throw new ForbiddenException('You cannot resend this invite.');
+
+    await this.prismaService.organizationInvite.updateMany({
+      where: {
+        email: invite.email,
+        organizationId: invite.organizationId,
+        status: OrganizationInviteStatus.PENDING,
+      },
+      data: {
+        status: OrganizationInviteStatus.EXPIRED,
+      },
+    });
+
+    const token: string = randomBytes(32).toString('hex');
+    const hashedToken: string = await this.hashingService.hashValue(token, 8);
+
+    const updatedInvite = await this.prismaService.organizationInvite.create({
+      data: {
+        email: invite.email,
+        organizationId: invite.organizationId,
+        invitedById: userId,
+        role: invite.role,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        status: OrganizationInviteStatus.PENDING,
+        token: hashedToken,
+      },
+    });
+
+    const invitationLink: string = `${this.configService.get<string>('CLIENT_URL')}/organization/${invite.organizationId}/invites?token=${token}`;
+
+    await this.emailProducer.sendOrganizationInviteEmail({
+      invitationLink,
+      invitedBy: {
+        name: member.user.name,
+        email: member.user.email,
+        avatar: member.user.avatar || '',
+        initial: member.user.name.charAt(0).toUpperCase(),
+      },
+      recipientEmail: invite.email,
+      organization: {
+        name: invite.organization.name,
+        logo: invite.organization.logo || '',
+        website: invite.organization.website || '',
+        initial: invite.organization.name.charAt(0).toUpperCase(),
+      },
+      role: invite.role,
+    });
+
+    return {
+      success: true,
+      message: 'Invite resent successfully.',
+      inviteId: updatedInvite.id,
+    };
+  }
 }
