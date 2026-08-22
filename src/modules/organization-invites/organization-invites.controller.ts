@@ -7,12 +7,12 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { OrganizationInvitesService } from './invites.service';
-import SendInviteDto from './dto/send-invite.dto';
+import { AuthGuard } from 'src/common/guards/auth/auth.guard';
+import { OrganizationInvitesService } from './organization-invites.service';
 import { ZodValidationPipe } from 'src/common/pipes/zod-validation/zod-validation.pipe';
 import SendInviteSchema from './schemas/send-invite.schema';
+import SendInviteDto from './dto/send-invite.dto';
 import { Request } from 'express';
-import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 
 @UseGuards(AuthGuard)
 @Controller('organizations/:organizationId/invites')

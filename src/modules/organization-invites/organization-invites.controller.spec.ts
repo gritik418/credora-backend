@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { OrganizationInvitesController } from './invites.controller';
+import { OrganizationInvitesController } from './organization-invites.controller';
 
 describe('OrganizationInvitesController', () => {
   let controller: OrganizationInvitesController;
@@ -9,9 +9,7 @@ describe('OrganizationInvitesController', () => {
       controllers: [OrganizationInvitesController],
     }).compile();
 
-    controller = module.get<OrganizationInvitesController>(
-      OrganizationInvitesController,
-    );
+    controller = module.get<OrganizationInvitesController>(OrganizationInvitesController);
   });
 
   it('should be defined', () => {

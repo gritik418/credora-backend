@@ -1,13 +1,14 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { HashingModule } from './common/hashing/hashing.module';
 import { PrismaModule } from './database/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { HashingModule } from './common/hashing/hashing.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { OrganizationInvitesModule } from './modules/organization-invites/organization-invites.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
 import { QueueModule } from './queue/queue.module';
-import { BullModule } from '@nestjs/bullmq';
 
 @Module({
   imports: [
@@ -24,10 +25,11 @@ import { BullModule } from '@nestjs/bullmq';
       }),
     }),
     PrismaModule,
-    AuthModule,
     HashingModule,
-    OrganizationsModule,
     QueueModule,
+    AuthModule,
+    OrganizationsModule,
+    OrganizationInvitesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

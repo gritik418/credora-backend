@@ -1,27 +1,13 @@
 import { Module } from '@nestjs/common';
+import { HashingModule } from 'src/common/hashing/hashing.module';
+import { QueueModule } from 'src/queue/queue.module';
+import { AuthModule } from '../auth/auth.module';
 import { OrganizationsController } from './organizations.controller';
 import { OrganizationsService } from './organizations.service';
-import { OrganizationInvitesController } from './invites/invites.controller';
-import { OrganizationInvitesService } from './invites/invites.service';
-import { HashingModule } from 'src/common/hashing/hashing.module';
-import { JwtModule } from '@nestjs/jwt';
-import { QueueModule } from 'src/queue/queue.module';
-import { ConfigService } from '@nestjs/config';
 
 @Module({
-  imports: [
-    JwtModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        return {
-          secret: configService.get<string>('JWT_SECRET'),
-        };
-      },
-    }),
-    HashingModule,
-    QueueModule,
-  ],
-  controllers: [OrganizationsController, OrganizationInvitesController],
-  providers: [OrganizationsService, OrganizationInvitesService],
+  imports: [AuthModule, HashingModule, QueueModule],
+  controllers: [OrganizationsController],
+  providers: [OrganizationsService],
 })
 export class OrganizationsModule {}

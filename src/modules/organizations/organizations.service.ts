@@ -221,23 +221,22 @@ export class OrganizationsService {
 
     if (!userId) throw new UnauthorizedException('Unauthorized.');
 
-    const user = await this.prismaService.user.findUnique({
+    const memberships = await this.prismaService.organizationMember.findMany({
       where: {
-        id: userId,
+        userId,
+      },
+      include: {
+        organization: true,
       },
     });
 
-    if (!user) throw new UnauthorizedException('Unauthorized.');
-
-    const organizations = await this.prismaService.organization.findMany({
-      where: {
-        organizationMembers: {
-          some: {
-            userId,
-          },
-        },
-      },
-    });
+    const organizations = memberships.map((membership) => ({
+      ...membership.organization,
+      role: membership.role,
+      membershipId: membership.id,
+      joinedAt: membership.joinedAt,
+      isActive: membership.isActive,
+    }));
 
     return {
       success: true,
