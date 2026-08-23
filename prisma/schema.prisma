@@ -190,6 +190,8 @@ model WorkspaceMember {
   workspaceId String
   userId      String
 
+  role  WorkspaceMemberRole @default(MEMBER)
+
   workspace Workspace @relation(fields: [workspaceId],references: [id],onDelete: Cascade)
 
   user User @relation(fields: [userId],references: [id],onDelete: Cascade)
@@ -201,7 +203,7 @@ model WorkspaceMember {
   @@index([userId])
 }
 
-enum WorkspaceRole {
+enum WorkspaceMemberRole {
   ADMIN
   MEMBER
 }
