@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -24,16 +25,25 @@ export class WorkspaceMembersController {
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async addWorkspaceMember(
+  async addWorkspaceMembers(
     @Param('workspaceId') workspaceId: string,
     @Body(new ZodValidationPipe(AddWorkspaceMembersSchema))
     data: AddWorkspaceMembersDto,
     @Req() req: Request,
   ) {
-    return this.workspaceMembersService.addWorkspaceMember(
+    return this.workspaceMembersService.addWorkspaceMembers(
       workspaceId,
       data,
       req,
     );
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getWorkspaceMembers(
+    @Param('workspaceId') workspaceId: string,
+    @Req() req: Request,
+  ) {
+    return this.workspaceMembersService.getWorkspaceMembers(workspaceId, req);
   }
 }

@@ -17,7 +17,7 @@ import {
 export class WorkspaceMembersService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async addWorkspaceMember(
+  async addWorkspaceMembers(
     workspaceId: string,
     data: AddWorkspaceMembersDto,
     req: Request,
@@ -163,6 +163,106 @@ export class WorkspaceMembersService {
       success: true,
       message: 'Workspace members added successfully.',
       addedCount: validMemberIds.length,
+    };
+  }
+
+  async getWorkspaceMembers(workspaceId: string, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) {
+      throw new UnauthorizedException('Unauthorized.');
+    }
+
+    if (!workspaceId) {
+      throw new BadRequestException('Workspace ID is required.');
+    }
+
+    const workspace = await this.prismaService.workspace.findUnique({
+      where: {
+        id: workspaceId,
+      },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!workspace) {
+      throw new NotFoundException('Workspace not found.');
+    }
+
+    const requesterMembership =
+      await this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId: workspace.organizationId,
+          },
+        },
+        select: {
+          role: true,
+          id: true,
+          isActive: true,
+        },
+      });
+
+    if (!requesterMembership || !requesterMembership.isActive) {
+      throw new ForbiddenException(
+        'You are not an active member of this organization.',
+      );
+    }
+
+    const isOrgOwnerOrAdmin =
+      requesterMembership.role === OrganizationMemberRole.OWNER ||
+      requesterMembership.role === OrganizationMemberRole.ADMIN;
+
+    const workspaceMember = await this.prismaService.workspaceMember.findUnique(
+      {
+        where: {
+          workspaceId_userId: {
+            userId,
+            workspaceId,
+          },
+        },
+        select: {
+          role: true,
+          id: true,
+        },
+      },
+    );
+
+    if (!workspaceMember && !isOrgOwnerOrAdmin) {
+      throw new ForbiddenException(
+        'You are not an active member of this workspace.',
+      );
+    }
+
+    const members = await this.prismaService.workspaceMember.findMany({
+      where: {
+        workspaceId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            isActive: true,
+            lastLoginAt: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Workspace members fetched successfully.',
+      members,
     };
   }
 }
