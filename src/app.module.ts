@@ -12,6 +12,7 @@ import { QueueModule } from './queue/queue.module';
 import { OrganizationMembersModule } from './modules/organization-members/organization-members.module';
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { WorkspaceMembersModule } from './modules/workspace-members/workspace-members.module';
+import { ProjectsModule } from './modules/projects/projects.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { WorkspaceMembersModule } from './modules/workspace-members/workspace-me
     OrganizationMembersModule,
     WorkspacesModule,
     WorkspaceMembersModule,
+    ProjectsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

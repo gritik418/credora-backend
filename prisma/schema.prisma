@@ -87,6 +87,8 @@ model Organization {
   organizationMembers OrganizationMember[]
   organizationInvites OrganizationInvite[]
   workspaces Workspace[]
+  projects Project[]
+  tasks Task[]
 }
 
 model OrganizationMember {
@@ -105,6 +107,9 @@ model OrganizationMember {
 
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  tasksToReview TaskReviewer[] @relation("TaskReviewer")
+  tasksAssigned TaskAssignee[] @relation("TaskAssignee")
 
   @@unique([userId, organizationId])
   @@index([organizationId])
@@ -214,6 +219,9 @@ model Project {
   workspaceId String
   workspace   Workspace @relation(fields: [workspaceId],references: [id],onDelete: Cascade)
 
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
   name        String
   slug        String
   description String?
@@ -231,9 +239,10 @@ model Project {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // tasks       Task[]
+  tasks       Task[]
 
   @@unique([workspaceId, slug])
+  @@index([organizationId])
   @@index([workspaceId])
   @@index([createdById])
 }
@@ -242,4 +251,93 @@ enum ProjectStatus {
   ACTIVE
   COMPLETED
   ARCHIVED
+}
+
+model Task {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+
+  status      TaskStatus  @default(TODO)
+  priority    TaskPriority    @default(MEDIUM)
+
+  startDate   DateTime?
+  dueDate     DateTime?
+  completedAt DateTime?
+
+  projectId   String?
+  project     Project?    @relation(fields: [projectId], references: [id])
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  assignees TaskAssignee[]
+
+  reviewRecords TaskReviewer[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+}
+
+model TaskAssignee {
+  id        String @id @default(cuid())
+
+  taskId    String
+  task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  memberId  String
+  member    OrganizationMember @relation("TaskAssignee", fields: [memberId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+
+  @@unique([taskId, memberId])
+  @@index([memberId])
+  @@index([taskId])
+}
+
+model TaskReviewer {
+  id String @id @default(cuid())
+
+  taskId     String
+  reviewerId String
+
+  task     Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reviewer OrganizationMember @relation("TaskReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+
+  reviewedAt DateTime?
+  status     TaskReviewStatus @default(PENDING)
+  note      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([taskId, reviewerId])
+  @@index([taskId])
+  @@index([reviewerId])
+}
+
+enum TaskReviewStatus {
+  PENDING
+  APPROVED
+  CHANGES_REQUESTED
+  REJECTED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  ESCALATED
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
