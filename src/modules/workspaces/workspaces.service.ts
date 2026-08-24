@@ -8,7 +8,10 @@ import {
 import { Request } from 'express';
 import { PrismaService } from 'src/database/prisma.service';
 import CreateWorkspaceDto from './dto/create-workspace.dto';
-import { OrganizationMemberRole } from 'generated/prisma/enums';
+import {
+  OrganizationMemberRole,
+  WorkspaceMemberRole,
+} from 'generated/prisma/enums';
 import { Workspace } from 'generated/prisma/browser';
 
 @Injectable()
@@ -77,6 +80,7 @@ export class WorkspacesService {
         members: {
           create: {
             userId,
+            role: WorkspaceMemberRole.ADMIN,
           },
         },
       },
