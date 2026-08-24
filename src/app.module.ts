@@ -14,6 +14,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { WorkspaceMembersModule } from './modules/workspace-members/workspace-members.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ProjectMembersModule } from './modules/project-members/project-members.module';
+import { TasksModule } from './modules/tasks/tasks.module';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ProjectMembersModule } from './modules/project-members/project-members.
     WorkspaceMembersModule,
     ProjectsModule,
     ProjectMembersModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService],

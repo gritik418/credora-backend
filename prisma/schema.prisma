@@ -38,6 +38,12 @@ model User {
   workspaceMembers WorkspaceMember[]
   projectMembers ProjectMember[]
   projects Project[]
+  tasksAssigned TaskAssignee[] @relation("TaskAssigner")
+  tasksAssignee TaskAssignee[] @relation("TaskAssignee")
+  reviewRequestsSent TaskReviewRequest[] @relation("TaskReviewRequester")
+  reviewRequestsReceived TaskReviewRequest[] @relation("TaskReviewRecipientMember")
+  reviewRecipients TaskReviewRecipient[] @relation("TaskReviewRecipient")
+
 }
 
 model Account {
@@ -109,8 +115,6 @@ model OrganizationMember {
   user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  tasksToReview TaskReviewer[] @relation("TaskReviewer")
-  tasksAssigned TaskAssignee[] @relation("TaskAssignee")
 
   @@unique([userId, organizationId])
   @@index([organizationId])
@@ -301,8 +305,8 @@ model Task {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   assignees TaskAssignee[]
-
-  reviewRecords TaskReviewer[]
+  reviewRecipients TaskReviewRecipient[]
+  reviewRequests   TaskReviewRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -318,34 +322,59 @@ model TaskAssignee {
   task      Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   memberId  String
-  member    OrganizationMember @relation("TaskAssignee", fields: [memberId], references: [id], onDelete: Cascade)
+  member    User @relation("TaskAssignee", fields: [memberId], references: [id], onDelete: Cascade)
 
   assignedAt DateTime @default(now())
+
+  assignerId String
+  assigner   User @relation("TaskAssigner", fields: [assignerId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, memberId])
   @@index([memberId])
   @@index([taskId])
 }
 
-model TaskReviewer {
+
+model TaskReviewRecipient {
   id String @id @default(cuid())
 
-  taskId     String
-  reviewerId String
+  taskId String
+  task   Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
 
-  task     Task               @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  reviewer OrganizationMember @relation("TaskReviewer", fields: [reviewerId], references: [id], onDelete: Cascade)
+  memberId String
+  member   User @relation("TaskReviewRecipient",fields: [memberId],references: [id],onDelete: Cascade)
 
-  reviewedAt DateTime?
-  status     TaskReviewStatus @default(PENDING)
-  note      String?
+  isDefault Boolean @default(false)
 
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 
-  @@unique([taskId, reviewerId])
+  @@unique([taskId, memberId])
   @@index([taskId])
-  @@index([reviewerId])
+  @@index([memberId])
+}
+
+model TaskReviewRequest {
+  id String @id @default(cuid())
+
+  taskId String
+  task   Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
+
+  requesterId String
+  requester   User @relation("TaskReviewRequester",fields: [requesterId],references: [id],onDelete: Cascade)
+
+  recipientId String
+  recipient   User @relation("TaskReviewRecipientMember",fields: [recipientId],references: [id],onDelete: Cascade)
+
+  status TaskReviewStatus @default(PENDING)
+
+  message String?
+
+  requestedAt DateTime @default(now())
+  reviewedAt  DateTime?
+
+  @@index([taskId])
+  @@index([requesterId])
+  @@index([recipientId])
 }
 
 enum TaskReviewStatus {
