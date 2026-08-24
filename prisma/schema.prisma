@@ -36,6 +36,7 @@ model User {
   organizationInvitesRevoked OrganizationInvite[] @relation("OrganizationInvite_revokedBy")
   workspacesCreated Workspace[]
   workspaceMembers WorkspaceMember[]
+  projectMembers ProjectMember[]
   projects Project[]
 }
 
@@ -240,11 +241,36 @@ model Project {
   updatedAt   DateTime @updatedAt
 
   tasks       Task[]
+  members     ProjectMember[]
 
   @@unique([workspaceId, slug])
   @@index([organizationId])
   @@index([workspaceId])
   @@index([createdById])
+}
+
+model ProjectMember {
+  id          String @id @default(cuid())
+
+  projectId   String
+  project     Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  userId      String
+  user        User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role        ProjectMemberRole @default(MEMBER)
+
+  joinedAt    DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([projectId, userId])
+  @@index([userId])
+}
+
+enum ProjectMemberRole {
+  ADMIN
+  MEMBER
 }
 
 enum ProjectStatus {

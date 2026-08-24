@@ -10,6 +10,7 @@ import { Request } from 'express';
 import { PrismaService } from 'src/database/prisma.service';
 import {
   OrganizationMemberRole,
+  ProjectMemberRole,
   ProjectStatus,
   WorkspaceMemberRole,
 } from 'generated/prisma/enums';
@@ -99,6 +100,14 @@ export class ProjectsService {
         workspaceId,
         createdById: userId,
         createdAt: new Date(),
+      },
+    });
+
+    await this.prismaService.projectMember.create({
+      data: {
+        projectId: project.id,
+        userId,
+        role: ProjectMemberRole.ADMIN,
       },
     });
 

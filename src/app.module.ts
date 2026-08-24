@@ -13,6 +13,7 @@ import { OrganizationMembersModule } from './modules/organization-members/organi
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { WorkspaceMembersModule } from './modules/workspace-members/workspace-members.module';
 import { ProjectsModule } from './modules/projects/projects.module';
+import { ProjectMembersModule } from './modules/project-members/project-members.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
     WorkspacesModule,
     WorkspaceMembersModule,
     ProjectsModule,
+    ProjectMembersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
