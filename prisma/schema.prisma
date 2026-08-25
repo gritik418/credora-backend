@@ -51,6 +51,9 @@ model User {
 
   contributionRequestsSent TaskContributionRequest[] @relation("ContributionRequester")
   contributionRequestsReceived TaskContributionRequest[] @relation("ContributionReviewer")
+
+  contributionsVerified TaskContribution[] @relation("TaskContributionVerifier")
+  contributions TaskContribution[]
 }
 
 model Account {
@@ -312,9 +315,12 @@ model Task {
   organization   Organization @relation(fields: [organizationId], references: [id])
 
   assignees TaskAssignee[]
+
   reviewRecipients TaskReviewRecipient[]
   reviewRequests   TaskReviewRequest[]
+
   contributionRequests TaskContributionRequest[]
+  contributions        TaskContribution[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -425,13 +431,54 @@ model TaskContributionRequest {
 
   status ContributionStatus @default(PENDING)
 
+  message  String?
   feedback String?
 
   requestedAt DateTime @default(now())
   reviewedAt DateTime?
 
+  contributionRecord TaskContribution?
+
+
   @@index([taskId])
   @@index([requesterId])
+    @@index([reviewerId])
+
+}
+
+model TaskContribution {
+  id String @id @default(cuid())
+
+  taskId String
+  task   Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
+
+  userId String
+  user   User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
+  contribution String
+
+  visibility ContributionVisibility @default(PRIVATE)
+
+  verifiedById String
+  verifiedBy   User @relation("TaskContributionVerifier",fields: [verifiedById],references: [id])
+
+  verifiedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  requestId String @unique
+  request   TaskContributionRequest @relation(fields: [requestId],references: [id])
+
+  @@index([taskId])
+  @@index([userId])
+  @@index([verifiedById])
+}
+
+enum ContributionVisibility {
+  PRIVATE
+  ORGANIZATION
+  PUBLIC
 }
 
 enum ContributionStatus {
