@@ -31,19 +31,26 @@ model User {
   emailVerificationTokenExpiry DateTime?
 
   accounts Account[]
+
   organizationMembers OrganizationMember[]
   organizationInvites OrganizationInvite[] @relation("OrganizationInvite_invitedBy")
   organizationInvitesRevoked OrganizationInvite[] @relation("OrganizationInvite_revokedBy")
+
   workspacesCreated Workspace[]
   workspaceMembers WorkspaceMember[]
+
   projectMembers ProjectMember[]
   projects Project[]
+
   tasksAssigned TaskAssignee[] @relation("TaskAssigner")
   tasksAssignee TaskAssignee[] @relation("TaskAssignee")
+
   reviewRequestsSent TaskReviewRequest[] @relation("TaskReviewRequester")
   reviewRequestsReceived TaskReviewRequest[] @relation("TaskReviewRecipientMember")
   reviewRecipients TaskReviewRecipient[] @relation("TaskReviewRecipient")
 
+  contributionRequestsSent TaskContributionRequest[] @relation("ContributionRequester")
+  contributionRequestsReceived TaskContributionRequest[] @relation("ContributionReviewer")
 }
 
 model Account {
@@ -307,6 +314,7 @@ model Task {
   assignees TaskAssignee[]
   reviewRecipients TaskReviewRecipient[]
   reviewRequests   TaskReviewRequest[]
+  contributionRequests TaskContributionRequest[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -398,4 +406,36 @@ enum TaskPriority {
   MEDIUM
   HIGH
   URGENT
+}
+
+model TaskContributionRequest {
+  id String @id @default(cuid())
+
+  taskId String
+  task   Task @relation(fields: [taskId],references: [id],onDelete: Cascade)
+
+  requesterId String
+  requester   User @relation("ContributionRequester",fields: [requesterId],references: [id])
+
+  reviewerId String?
+  reviewer   User? @relation("ContributionReviewer",fields: [reviewerId],references: [id])
+
+
+  contribution String
+
+  status ContributionStatus @default(PENDING)
+
+  feedback String?
+
+  requestedAt DateTime @default(now())
+  reviewedAt DateTime?
+
+  @@index([taskId])
+  @@index([requesterId])
+}
+
+enum ContributionStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
