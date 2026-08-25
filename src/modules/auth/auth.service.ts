@@ -72,6 +72,21 @@ export class AuthService {
       }
     }
 
+    const existingUsername = await this.prismaService.user.findUnique({
+      where: {
+        username: data.username,
+      },
+      select: {
+        isEmailVerified: true,
+      },
+    });
+
+    if (existingUsername) {
+      if (existingUsername.isEmailVerified) {
+        throw new BadRequestException('Username already exists.');
+      }
+    }
+
     const hashedPassword: string = await this.hashingService.hashValue(
       data.password,
     );
@@ -97,6 +112,7 @@ export class AuthService {
         data: {
           name: data.name,
           role: data.role,
+          username: data.username,
           password: hashedPassword,
 
           isEmailVerified: false,
@@ -124,6 +140,7 @@ export class AuthService {
           email: data.email,
           password: hashedPassword,
           role: data.role,
+          username: data.username,
 
           isEmailVerified: false,
           isActive: false,
@@ -158,9 +175,16 @@ export class AuthService {
   }
 
   async login(data: LoginDto, res: Response) {
-    const user = await this.prismaService.user.findUnique({
+    const user = await this.prismaService.user.findFirst({
       where: {
-        email: data.email,
+        OR: [
+          {
+            email: data.identifier,
+          },
+          {
+            username: data.identifier,
+          },
+        ],
       },
       include: {
         accounts: true,
@@ -222,6 +246,7 @@ export class AuthService {
         avatar: user.avatar,
         name: user.name,
         email: user.email,
+        username: user.username,
         role: user.role,
       },
     };
@@ -317,6 +342,7 @@ export class AuthService {
         role: true,
         lastLoginAt: true,
         isActive: true,
+        username: true,
       },
     });
 

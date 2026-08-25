@@ -1,7 +1,11 @@
 import z from 'zod';
 
 const LoginSchema = z.object({
-  email: z.email('Please enter a valid email address.').toLowerCase(),
+  identifier: z
+    .string()
+    .trim()
+    .min(1, 'Identifier is required.')
+    .max(100, "Identifier can't exceed 100 characters."),
   password: z
     .string()
     .min(1, 'Password is required')
