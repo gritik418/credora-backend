@@ -7,6 +7,7 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Get,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { Request } from 'express';
@@ -28,5 +29,11 @@ export class TasksController {
     @Req() req: Request,
   ) {
     return this.tasksService.createTask(projectId, data, req);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getTasks(@Param('projectId') projectId: string, @Req() req: Request) {
+    return this.tasksService.getTasks(projectId, req);
   }
 }

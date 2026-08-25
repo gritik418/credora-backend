@@ -151,4 +151,111 @@ export class TasksService {
       message: 'Task created successfully.',
     };
   }
+
+  async getTasks(projectId: string, req: Request) {
+    const userId: string = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const project = await this.prismaService.project.findUnique({
+      where: { id: projectId },
+      include: {
+        workspace: {
+          select: {
+            id: true,
+            isActive: true,
+          },
+        },
+        organization: {
+          select: {
+            id: true,
+            isActive: true,
+          },
+        },
+      },
+    });
+
+    if (!project) throw new NotFoundException('Project not found.');
+
+    const [projectMember, workspaceMember, organizationMember] =
+      await Promise.all([
+        this.prismaService.projectMember.findUnique({
+          where: {
+            projectId_userId: {
+              projectId,
+              userId,
+            },
+          },
+          select: {
+            id: true,
+            role: true,
+          },
+        }),
+        this.prismaService.workspaceMember.findUnique({
+          where: {
+            workspaceId_userId: {
+              workspaceId: project.workspace.id,
+              userId,
+            },
+          },
+          select: {
+            id: true,
+            role: true,
+          },
+        }),
+        this.prismaService.organizationMember.findUnique({
+          where: {
+            userId_organizationId: {
+              organizationId: project.organization.id,
+              userId,
+            },
+          },
+          select: {
+            id: true,
+            role: true,
+            isActive: true,
+          },
+        }),
+      ]);
+
+    if (!organizationMember?.isActive) {
+      throw new ForbiddenException(
+        'You are not authorized to view tasks in this project.',
+      );
+    }
+
+    if (!projectMember && !workspaceMember && !organizationMember) {
+      throw new ForbiddenException(
+        'You are not authorized to view tasks in this project.',
+      );
+    }
+
+    const isOrgOwnerOrAdmin =
+      organizationMember?.role === OrganizationMemberRole.OWNER ||
+      organizationMember?.role === OrganizationMemberRole.ADMIN;
+
+    const isWorkspaceAdmin =
+      workspaceMember?.role === WorkspaceMemberRole.ADMIN;
+
+    if (!projectMember && !isWorkspaceAdmin && !isOrgOwnerOrAdmin) {
+      throw new ForbiddenException(
+        'You are not authorized to create tasks in this project.',
+      );
+    }
+
+    const tasks = await this.prismaService.task.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        assignees: true,
+        reviewRecipients: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Tasks fetched successfully.',
+      tasks,
+    };
+  }
 }
