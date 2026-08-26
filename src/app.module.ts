@@ -16,6 +16,7 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { ProjectMembersModule } from './modules/project-members/project-members.module';
 import { TasksModule } from './modules/tasks/tasks.module';
 import { PostsModule } from './modules/posts/posts.module';
+import { CloudinaryModule } from './providers/cloudinary/cloudinary.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { PostsModule } from './modules/posts/posts.module';
     ProjectMembersModule,
     TasksModule,
     PostsModule,
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],

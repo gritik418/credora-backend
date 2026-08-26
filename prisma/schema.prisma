@@ -500,7 +500,7 @@ enum ContributionStatus {
 
 model Post {
   id        String   @id @default(uuid())
-  content   String  @db.Text
+  content   String?  @db.Text
 
   commentPermission PostCommentPermission @default(EVERYONE)
 
@@ -550,6 +550,9 @@ model PostMedia {
   fileName String?
   fileSize Int?
 
+  position Int @default(0)
+
+
   postId String
   post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
@@ -566,6 +569,7 @@ enum PostVisibility {
 }
 
 enum PostStatus {
+  DRAFT
   PUBLISHED
   ARCHIVED
   DELETED
@@ -605,7 +609,6 @@ model PostComment {
   authorId String
   author   User @relation("UserPostComments",fields: [authorId],references: [id],onDelete: Cascade)
 
-  // Replies
   parentId String?
   parent   PostComment? @relation("CommentReplies",fields: [parentId],references: [id],onDelete: Cascade)
 
@@ -629,6 +632,8 @@ model Hashtag {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([slug])
 }
 
 model PostHashtag {
