@@ -56,6 +56,11 @@ model User {
   contributionsVerified TaskContribution[] @relation("TaskContributionVerifier")
   contributions TaskContribution[]
 
+  posts        Post[] @relation("UserPosts")
+  reactions    PostReaction[] @relation("UserPostReactions")
+  comments     PostComment[]  @relation("UserPostComments")
+
+
   @@index([username])
   @@index([email])
 }
@@ -489,4 +494,151 @@ enum ContributionStatus {
   PENDING
   APPROVED
   REJECTED
+}
+
+
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String  @db.Text
+
+  commentPermission PostCommentPermission @default(EVERYONE)
+
+  visibility PostVisibility @default(PUBLIC)
+  status     PostStatus     @default(PUBLISHED)
+
+  authorId String
+  author   User   @relation("UserPosts", fields: [authorId], references: [id], onDelete: Cascade)
+
+  media     PostMedia[]
+  reactions PostReaction[]
+  comments  PostComment[]
+
+  hashtags PostHashtag[]
+
+
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([authorId])
+
+  @@index([status, visibility])
+  @@index([createdAt])
+}
+
+enum PostMediaType {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+enum PostCommentPermission {
+  EVERYONE
+  CONNECTIONS
+  NO_ONE
+}
+
+model PostMedia {
+  id String @id @default(uuid())
+
+  type PostMediaType
+
+  url      String
+  publicId String?
+
+  fileName String?
+  fileSize Int?
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([postId])
+}
+
+
+enum PostVisibility {
+  PUBLIC
+  CONNECTIONS
+  PRIVATE
+}
+
+enum PostStatus {
+  PUBLISHED
+  ARCHIVED
+  DELETED
+}
+
+enum PostReactionType {
+  LIKE
+  INSIGHTFUL
+  CELEBRATE
+  SUPPORT
+}
+
+model PostReaction {
+  id String @id @default(uuid())
+
+  type PostReactionType
+
+  postId String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation("UserPostReactions",fields: [userId],references: [id],onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+  @@index([userId])
+}
+
+model PostComment {
+  id      String @id @default(uuid())
+  content String @db.Text
+
+  postId String
+  post   Post @relation(fields: [postId],references: [id],onDelete: Cascade)
+
+  authorId String
+  author   User @relation("UserPostComments",fields: [authorId],references: [id],onDelete: Cascade)
+
+  // Replies
+  parentId String?
+  parent   PostComment? @relation("CommentReplies",fields: [parentId],references: [id],onDelete: Cascade)
+
+  replies PostComment[] @relation("CommentReplies")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([authorId])
+  @@index([parentId])
+}
+
+model Hashtag {
+  id String @id @default(uuid())
+
+  name String @unique
+  slug String @unique
+
+  posts PostHashtag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PostHashtag {
+  postId String
+  hashtagId String
+
+  post    Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  hashtag Hashtag @relation(fields: [hashtagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, hashtagId])
+
+  @@index([hashtagId])
 }

@@ -15,6 +15,7 @@ import { WorkspaceMembersModule } from './modules/workspace-members/workspace-me
 import { ProjectsModule } from './modules/projects/projects.module';
 import { ProjectMembersModule } from './modules/project-members/project-members.module';
 import { TasksModule } from './modules/tasks/tasks.module';
+import { PostsModule } from './modules/posts/posts.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { TasksModule } from './modules/tasks/tasks.module';
     ProjectsModule,
     ProjectMembersModule,
     TasksModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
