@@ -61,6 +61,7 @@ model User {
   comments     PostComment[]  @relation("UserPostComments")
 
   profile Profile?
+  onboarding UserOnboarding?
 
   @@index([username])
   @@index([email])
@@ -119,6 +120,38 @@ model Profile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model UserOnboarding {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user User @relation(  fields: [userId],  references: [id],  onDelete: Cascade)
+
+  currentStep OnboardingStep @default(BASIC_INFO)
+  isCompleted Boolean @default(false)
+  completedAt DateTime?
+
+  basicInfoCompleted Boolean @default(false)
+  professionalInfoCompleted Boolean @default(false)
+  summaryCompleted Boolean @default(false)
+  locationCompleted Boolean @default(false)
+  skillsCompleted Boolean @default(false)
+  availabilityCompleted Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum OnboardingStep {
+  BASIC_INFO
+  PROFESSIONAL
+  SUMMARY
+  LOCATION
+  SKILLS
+  AVAILABILITY
+  COMPLETED
+}
+
 
 model Skill {
   id String @id @default(cuid())

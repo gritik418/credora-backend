@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import RegisterDto from './dto/register.dto';
-import { AuthProvider, UserRole } from 'generated/prisma/enums';
+import { AuthProvider, OnboardingStep, UserRole } from 'generated/prisma/enums';
 import { HashingService } from 'src/common/hashing/hashing.service';
 import { v4 as uuidv4 } from 'uuid';
 import LoginDto from './dto/login.dto';
@@ -298,6 +298,13 @@ export class AuthService {
         emailVerificationToken: null,
         emailVerificationTokenExpiry: null,
         lastLoginAt: new Date(),
+      },
+    });
+
+    await this.prismaService.userOnboarding.create({
+      data: {
+        userId: user.id,
+        currentStep: OnboardingStep.BASIC_INFO,
       },
     });
 
