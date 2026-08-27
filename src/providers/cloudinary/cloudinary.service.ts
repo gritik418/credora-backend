@@ -40,4 +40,14 @@ export class CloudinaryService {
       uploadStream.end(file.buffer);
     });
   }
+
+  async deleteFile(publicId: string) {
+    try {
+      await this.cloudinary.uploader.destroy(publicId, {
+        resource_type: 'auto',
+      });
+    } catch (error) {
+      throw error;
+    }
+  }
 }

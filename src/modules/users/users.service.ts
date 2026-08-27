@@ -5,13 +5,20 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { PrismaService } from 'src/database/prisma.service';
-import AddProfessionalInfoDto from './dto/add-professional-info.dto';
 import { OnboardingStep } from 'generated/prisma/enums';
+import { PrismaService } from 'src/database/prisma.service';
+import { CloudinaryFolders } from 'src/providers/cloudinary/cloudinary.constants';
+import { CustomUploadResult } from 'src/providers/cloudinary/cloudinary.interface';
+import { CloudinaryService } from 'src/providers/cloudinary/cloudinary.service';
+import AddProfessionalInfoDto from './dto/add-professional-info.dto';
+import UpdateBasicInfoDto from './dto/update-basic-info.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   async getMe(req: Request) {
     const userId: string = req.user.id;
@@ -69,6 +76,68 @@ export class UsersService {
     };
   }
 
+  async updateBasicInfo(
+    data: UpdateBasicInfoDto,
+    file: Express.Multer.File | null,
+    req: Request,
+  ) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        avatarPublicId: true,
+      },
+    });
+    if (!user) throw new NotFoundException('User not found.');
+
+    let uploadResult: CustomUploadResult | null = null;
+
+    if (file) {
+      uploadResult = await this.uploadAvatar(
+        file,
+        !!user.avatarPublicId,
+        user.avatarPublicId ?? undefined,
+      );
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          name: data.name,
+          ...(uploadResult?.publicId && {
+            avatarPublicId: uploadResult?.publicId,
+            avatar: uploadResult?.url,
+          }),
+        },
+      });
+
+      await tx.userOnboarding.upsert({
+        where: {
+          userId,
+        },
+        update: {
+          basicInfoCompleted: true,
+          currentStep: OnboardingStep.PROFESSIONAL,
+        },
+        create: {
+          userId,
+          basicInfoCompleted: true,
+          currentStep: OnboardingStep.PROFESSIONAL,
+        },
+      });
+    });
+
+    return { success: true, message: 'Basic info updated successfully.' };
+  }
+
   async addProfessionalInfo(data: AddProfessionalInfoDto, req: Request) {
     const userId: string = req.user.id;
 
@@ -121,5 +190,22 @@ export class UsersService {
       success: true,
       message: 'Professional information added successfully.',
     };
+  }
+
+  private async uploadAvatar(
+    file: Express.Multer.File,
+    isExistingAvatar: boolean,
+    publicId: string | undefined,
+  ): Promise<CustomUploadResult> {
+    if (isExistingAvatar && publicId) {
+      await this.cloudinaryService.deleteFile(publicId);
+    }
+
+    const uploadResult = await this.cloudinaryService.uploadFile(
+      file,
+      CloudinaryFolders.USER_AVATARS,
+    );
+
+    return uploadResult;
   }
 }

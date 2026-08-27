@@ -13,6 +13,8 @@ model User {
 
   name String
   avatar String?
+  avatarPublicId String?
+
 
   username String @unique
   email         String   @unique
