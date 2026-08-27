@@ -192,6 +192,56 @@ export class UsersService {
     };
   }
 
+  async addSummary(data: AddSummaryDto, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.SUMMARY)
+      throw new BadRequestException(
+        'Please complete the previous step before proceeding.',
+      );
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.profile.upsert({
+        where: {
+          userId,
+        },
+        update: {
+          bio: data.summary,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          bio: data.summary,
+        },
+      });
+
+      await tx.userOnboarding.update({
+        where: {
+          userId,
+        },
+        data: {
+          summaryCompleted: true,
+          currentStep: OnboardingStep.LOCATION,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Summary added successfully.',
+    };
+  }
+
   private async uploadAvatar(
     file: Express.Multer.File,
     isExistingAvatar: boolean,

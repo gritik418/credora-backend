@@ -20,6 +20,8 @@ import UpdateBasicInfoSchema from './schemas/update-basic-info.schema';
 import UpdateBasicInfoDto from './dto/update-basic-info.dto';
 import { AvatarValidationPipe } from './pipes/avatar-validation/avatar-validation.pipe';
 import { FileInterceptor } from '@nestjs/platform-express';
+import AddSummarySchema from './schemas/add-summary.schema';
+import AddSummaryDto from './dto/add-summary.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -57,5 +59,15 @@ export class UsersController {
     @Req() req: Request,
   ) {
     return this.usersService.addProfessionalInfo(addProfessionalInfoDto, req);
+  }
+
+  @Patch('me/summary')
+  @HttpCode(HttpStatus.OK)
+  async addSummary(
+    @Body(new ZodValidationPipe(AddSummarySchema))
+    addSummaryDto: AddSummaryDto,
+    @Req() req: Request,
+  ) {
+    return this.usersService.addSummary(addSummaryDto, req);
   }
 }
