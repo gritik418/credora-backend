@@ -60,6 +60,7 @@ model User {
   reactions    PostReaction[] @relation("UserPostReactions")
   comments     PostComment[]  @relation("UserPostComments")
 
+  profile Profile?
 
   @@index([username])
   @@index([email])
@@ -90,6 +91,43 @@ enum UserRole {
   ADMIN
   EMPLOYEE
   RECRUITER
+}
+
+model Profile {
+  id String @id @default(cuid())
+
+  userId String @unique
+  user User @relation(fields: [userId],references: [id],onDelete: Cascade)
+
+  headline String? @db.VarChar(200)
+  profession String? @db.VarChar(100)
+  industry String? @db.VarChar(100)
+  bio String? @db.Text
+
+   city String?
+  state String?
+  country String?
+
+  website String?
+  linkedinUrl String?
+  githubUrl String?
+
+  skills Skill[]
+
+  isOpenToWork Boolean @default(false)
+  isOpenToCollaborate Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Skill {
+  id String @id @default(cuid())
+
+  name String @unique
+  slug String @unique
+
+  profiles Profile[]
 }
 
 model Organization {
