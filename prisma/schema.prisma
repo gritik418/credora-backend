@@ -90,7 +90,6 @@ enum AuthProvider {
 enum UserRole {
   ADMIN
   EMPLOYEE
-  RECRUITER
 }
 
 model Profile {
