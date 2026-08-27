@@ -22,6 +22,8 @@ import { AvatarValidationPipe } from './pipes/avatar-validation/avatar-validatio
 import { FileInterceptor } from '@nestjs/platform-express';
 import AddSummarySchema from './schemas/add-summary.schema';
 import AddSummaryDto from './dto/add-summary.dto';
+import AddLocationInfoSchema from './schemas/add-location-info.schema';
+import AddLocationInfoDto from './dto/add-location-info.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -69,5 +71,15 @@ export class UsersController {
     @Req() req: Request,
   ) {
     return this.usersService.addSummary(addSummaryDto, req);
+  }
+
+  @Patch('me/location')
+  @HttpCode(HttpStatus.OK)
+  async addLocationInfo(
+    @Body(new ZodValidationPipe(AddLocationInfoSchema))
+    addLocationInfoDto: AddLocationInfoDto,
+    @Req() req: Request,
+  ) {
+    return this.usersService.addLocationInfo(addLocationInfoDto, req);
   }
 }

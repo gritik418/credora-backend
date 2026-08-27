@@ -12,6 +12,8 @@ import { CustomUploadResult } from 'src/providers/cloudinary/cloudinary.interfac
 import { CloudinaryService } from 'src/providers/cloudinary/cloudinary.service';
 import AddProfessionalInfoDto from './dto/add-professional-info.dto';
 import UpdateBasicInfoDto from './dto/update-basic-info.dto';
+import AddSummaryDto from './dto/add-summary.dto';
+import AddLocationInfoDto from './dto/add-location-info.dto';
 
 @Injectable()
 export class UsersService {
@@ -239,6 +241,60 @@ export class UsersService {
     return {
       success: true,
       message: 'Summary added successfully.',
+    };
+  }
+
+  async addLocationInfo(data: AddLocationInfoDto, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.LOCATION)
+      throw new BadRequestException(
+        'Please complete the previous step before proceeding.',
+      );
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.profile.upsert({
+        where: {
+          userId,
+        },
+        update: {
+          city: data.city,
+          state: data.state,
+          country: data.country,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          city: data.city,
+          state: data.state,
+          country: data.country,
+        },
+      });
+
+      await tx.userOnboarding.update({
+        where: {
+          userId,
+        },
+        data: {
+          locationCompleted: true,
+          currentStep: OnboardingStep.SKILLS,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Location information added successfully.',
     };
   }
 
