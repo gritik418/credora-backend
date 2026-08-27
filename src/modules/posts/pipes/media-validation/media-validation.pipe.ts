@@ -10,7 +10,7 @@ import { MediaFile } from '../../types/post-media.types';
 @Injectable()
 export class MediaValidationPipe implements PipeTransform {
   transform(files: any, metadata: ArgumentMetadata) {
-    if (!files) return;
+    if (!files || files.length === 0) return [];
 
     if (!Array.isArray(files))
       throw new BadRequestException('Media must be an array.');

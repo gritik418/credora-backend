@@ -1,6 +1,9 @@
 import {
   Body,
   Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
   Post,
   Req,
   UploadedFiles,
@@ -22,7 +25,14 @@ import { MediaFile } from './types/post-media.types';
 export class PostsController {
   constructor(private readonly postsService: PostsService) {}
 
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  getPublicPosts(@Req() req: Request) {
+    return this.postsService.getPublicPosts(req);
+  }
+
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FilesInterceptor('media'))
   create(
     @Body(new ZodValidationPipe(CreatePostSchema)) data: CreatePostDto,

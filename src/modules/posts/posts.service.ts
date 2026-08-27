@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { PostStatus } from 'generated/prisma/browser';
+import { PostStatus, PostVisibility } from 'generated/prisma/browser';
 import { PrismaService } from 'src/database/prisma.service';
 import { CloudinaryFolders } from 'src/providers/cloudinary/cloudinary.constants';
 import { CustomUploadResult } from 'src/providers/cloudinary/cloudinary.interface';
@@ -46,6 +46,7 @@ export class PostsService {
           commentPermission: data.commentPermission,
           visibility: data.visibility,
           status: PostStatus.PUBLISHED,
+          publishedAt: new Date(),
         },
       });
 
@@ -83,15 +84,60 @@ export class PostsService {
     };
   }
 
+  async getPublicPosts(req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const posts = await this.prismaService.post.findMany({
+      where: {
+        status: PostStatus.PUBLISHED,
+        OR: [
+          { visibility: PostVisibility.PUBLIC },
+          {
+            authorId: userId,
+          },
+        ],
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+            isActive: true,
+          },
+        },
+        media: true,
+        comments: true,
+        hashtags: {
+          include: {
+            hashtag: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Public posts fetched successfully.',
+      data: posts,
+    };
+  }
+
   private async processHashtags(hashtags: string[]) {
     if (!hashtags || !hashtags.length) return [];
 
+    const normalizedHashtags = hashtags.map((tag) => tag.toLowerCase().trim());
+
     const existingHashtags = await this.prismaService.hashtag.findMany({
-      where: { name: { in: hashtags } },
+      where: { slug: { in: normalizedHashtags } },
     });
 
     const newHashtags = hashtags.filter(
-      (tag) => !existingHashtags.some((ht) => ht.name === tag),
+      (tag) =>
+        !existingHashtags.some((ht) => ht.slug === tag.trim().toLowerCase()),
     );
 
     const createdHashtags = await this.createHashtags(newHashtags);
@@ -112,8 +158,10 @@ export class PostsService {
 
     if (batchPayload.count === 0) return [];
 
+    const slugs = hashtags.map((tag) => tag.toLowerCase().trim());
+
     const createdHashtags = await this.prismaService.hashtag.findMany({
-      where: { name: { in: hashtags } },
+      where: { slug: { in: slugs } },
     });
 
     return createdHashtags;
