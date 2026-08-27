@@ -20,5 +20,6 @@ import { CLOUDINARY_PROVIDER } from './cloudinary.constants';
       inject: [ConfigService],
     },
   ],
+  exports: [CloudinaryService],
 })
 export class CloudinaryModule {}

@@ -25,6 +25,8 @@ export class HttpExceptionFilter<T> implements ExceptionFilter {
         ? (exception.getResponse() as any).errors || null
         : null;
 
+    console.log('e', exception);
+
     response.status(status).json({
       success: false,
       message,

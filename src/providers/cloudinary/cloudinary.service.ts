@@ -1,6 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { UploadApiErrorResponse, UploadApiResponse, v2 } from 'cloudinary';
 import { CLOUDINARY_PROVIDER } from './cloudinary.constants';
+import { CustomUploadResult } from './cloudinary.interface';
 
 @Injectable()
 export class CloudinaryService {
@@ -11,7 +12,7 @@ export class CloudinaryService {
   async uploadFile(
     file: Express.Multer.File,
     folder: string,
-  ): Promise<UploadApiResponse> {
+  ): Promise<CustomUploadResult> {
     return new Promise((resolve, reject) => {
       const uploadStream = this.cloudinary.uploader.upload_stream(
         {
@@ -30,7 +31,9 @@ export class CloudinaryService {
             return reject(new Error('Cloudinary upload failed.'));
           }
 
-          resolve(result);
+          result.mediaFile = file;
+
+          resolve(result as CustomUploadResult);
         },
       );
 
