@@ -26,6 +26,8 @@ import AddLocationInfoSchema from './schemas/add-location-info.schema';
 import AddLocationInfoDto from './dto/add-location-info.dto';
 import SaveSkillsSchema from '../skills/schemas/save-skills.schema';
 import SaveSkillsDto from '../skills/dto/save-skills.dto';
+import AddEducationInfoSchema from './schemas/add-education-info.schema';
+import AddEducationInfoDto from './dto/add-education-info.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -93,5 +95,15 @@ export class UsersController {
     @Req() req: Request,
   ) {
     return this.usersService.addSkillsInfo(data, req);
+  }
+
+  @Patch('me/education')
+  @HttpCode(HttpStatus.OK)
+  async addEducationInfo(
+    @Body(new ZodValidationPipe(AddEducationInfoSchema))
+    addEducationInfoDto: AddEducationInfoDto,
+    @Req() req: Request,
+  ) {
+    return this.usersService.addEducationInfo(addEducationInfoDto, req);
   }
 }

@@ -16,6 +16,8 @@ import AddSummaryDto from './dto/add-summary.dto';
 import AddLocationInfoDto from './dto/add-location-info.dto';
 import SaveSkillsDto from '../skills/dto/save-skills.dto';
 import { SkillsService } from '../skills/skills.service';
+import AddEducationInfoDto from './dto/add-education-info.dto';
+import { Education } from 'generated/prisma/browser';
 
 @Injectable()
 export class UsersService {
@@ -359,6 +361,84 @@ export class UsersService {
       success: true,
       message: 'Skills added successfully.',
       nextStep: OnboardingStep.EDUCATION,
+    };
+  }
+
+  async addEducationInfo(data: AddEducationInfoDto, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.EDUCATION)
+      throw new BadRequestException(
+        'Please complete the previous step before proceeding.',
+      );
+
+    await this.prismaService.$transaction(async (tx) => {
+      const profile = await tx.profile.findUnique({
+        where: {
+          userId,
+        },
+      });
+
+      if (!profile) throw new NotFoundException('Profile not found.');
+
+      const educations: Education[] = [];
+
+      for (const education of data.educations) {
+        const createdEducation = await tx.education.create({
+          data: {
+            profileId: profile.id,
+            institution: education.institution,
+            degree: education.degree,
+            fieldOfStudy: education.fieldOfStudy,
+            startDate: education.startDate,
+            endDate: education.endDate,
+            grade: education.grade,
+            description: education.description,
+            isCurrentlyStudying: education.isCurrentlyStudying,
+          },
+        });
+
+        educations.push(createdEducation);
+      }
+
+      await tx.profile.update({
+        where: {
+          userId,
+        },
+        data: {
+          educations: {
+            connect: educations.map((education) => ({
+              id: education.id,
+            })),
+          },
+        },
+      });
+
+      await tx.userOnboarding.update({
+        where: {
+          userId,
+        },
+        data: {
+          educationInfoCompleted: true,
+          currentStep: OnboardingStep.AVAILABILITY,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Education information added successfully.',
+      nextStep: OnboardingStep.AVAILABILITY,
     };
   }
 
