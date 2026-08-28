@@ -64,17 +64,19 @@ export class SkillsService {
         ),
     );
 
-    const formattedSkills = newSkills.map((skill) => {
-      return {
-        name: skill,
-        slug: skill.toLowerCase().replace(/\s/g, ''),
-      };
-    });
+    if (newSkills.length > 0) {
+      const formattedSkills = newSkills.map((skill) => {
+        return {
+          name: skill,
+          slug: skill.toLowerCase().replace(/\s/g, ''),
+        };
+      });
 
-    await this.prismaService.skill.createMany({
-      data: formattedSkills,
-      skipDuplicates: true,
-    });
+      await this.prismaService.skill.createMany({
+        data: formattedSkills,
+        skipDuplicates: true,
+      });
+    }
 
     const savedSkills = await this.prismaService.skill.findMany({
       where: {

@@ -136,9 +136,10 @@ model UserOnboarding {
   basicInfoCompleted Boolean @default(false)
   professionalInfoCompleted Boolean @default(false)
   summaryCompleted Boolean @default(false)
-  locationCompleted Boolean @default(false)
+  locationInfoCompleted Boolean @default(false)
   skillsCompleted Boolean @default(false)
-  availabilityCompleted Boolean @default(false)
+  educationInfoCompleted Boolean @default(false)
+  availabilityInfoCompleted Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -150,6 +151,7 @@ enum OnboardingStep {
   SUMMARY
   LOCATION
   SKILLS
+  EDUCATION
   AVAILABILITY
   COMPLETED
 }

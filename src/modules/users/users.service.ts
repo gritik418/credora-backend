@@ -14,12 +14,15 @@ import AddProfessionalInfoDto from './dto/add-professional-info.dto';
 import UpdateBasicInfoDto from './dto/update-basic-info.dto';
 import AddSummaryDto from './dto/add-summary.dto';
 import AddLocationInfoDto from './dto/add-location-info.dto';
+import SaveSkillsDto from '../skills/dto/save-skills.dto';
+import { SkillsService } from '../skills/skills.service';
 
 @Injectable()
 export class UsersService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly skillsService: SkillsService,
   ) {}
 
   async getMe(req: Request) {
@@ -137,7 +140,11 @@ export class UsersService {
       });
     });
 
-    return { success: true, message: 'Basic info updated successfully.' };
+    return {
+      success: true,
+      message: 'Basic info updated successfully.',
+      nextStep: OnboardingStep.PROFESSIONAL,
+    };
   }
 
   async addProfessionalInfo(data: AddProfessionalInfoDto, req: Request) {
@@ -191,6 +198,7 @@ export class UsersService {
     return {
       success: true,
       message: 'Professional information added successfully.',
+      nextStep: OnboardingStep.SUMMARY,
     };
   }
 
@@ -241,6 +249,7 @@ export class UsersService {
     return {
       success: true,
       message: 'Summary added successfully.',
+      nextStep: OnboardingStep.LOCATION,
     };
   }
 
@@ -286,7 +295,7 @@ export class UsersService {
           userId,
         },
         data: {
-          locationCompleted: true,
+          locationInfoCompleted: true,
           currentStep: OnboardingStep.SKILLS,
         },
       });
@@ -295,6 +304,61 @@ export class UsersService {
     return {
       success: true,
       message: 'Location information added successfully.',
+      nextStep: OnboardingStep.SKILLS,
+    };
+  }
+
+  async addSkillsInfo(data: SaveSkillsDto, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.SKILLS)
+      throw new BadRequestException(
+        'Please complete the previous step before proceeding.',
+      );
+
+    const { skills } = await this.skillsService.saveSkills(data, req);
+
+    if (!skills?.length) throw new BadRequestException('No skills found.');
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.profile.update({
+        where: {
+          userId,
+        },
+        data: {
+          skills: {
+            connect: skills.map((skill) => ({
+              id: skill.id,
+            })),
+          },
+        },
+      });
+
+      await tx.userOnboarding.update({
+        where: {
+          userId,
+        },
+        data: {
+          skillsCompleted: true,
+          currentStep: OnboardingStep.EDUCATION,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Skills added successfully.',
+      nextStep: OnboardingStep.EDUCATION,
     };
   }
 

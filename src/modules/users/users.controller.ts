@@ -24,6 +24,8 @@ import AddSummarySchema from './schemas/add-summary.schema';
 import AddSummaryDto from './dto/add-summary.dto';
 import AddLocationInfoSchema from './schemas/add-location-info.schema';
 import AddLocationInfoDto from './dto/add-location-info.dto';
+import SaveSkillsSchema from '../skills/schemas/save-skills.schema';
+import SaveSkillsDto from '../skills/dto/save-skills.dto';
 
 @Controller('users')
 @UseGuards(AuthGuard)
@@ -81,5 +83,15 @@ export class UsersController {
     @Req() req: Request,
   ) {
     return this.usersService.addLocationInfo(addLocationInfoDto, req);
+  }
+
+  @Patch('me/skills')
+  @HttpCode(HttpStatus.OK)
+  async addSkills(
+    @Body(new ZodValidationPipe(SaveSkillsSchema))
+    data: SaveSkillsDto,
+    @Req() req: Request,
+  ) {
+    return this.usersService.addSkillsInfo(data, req);
   }
 }
