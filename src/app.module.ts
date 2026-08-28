@@ -18,6 +18,7 @@ import { WorkspaceMembersModule } from './modules/workspace-members/workspace-me
 import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { CloudinaryModule } from './providers/cloudinary/cloudinary.module';
 import { QueueModule } from './queue/queue.module';
+import { SkillsModule } from './modules/skills/skills.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { QueueModule } from './queue/queue.module';
     PostsModule,
     CloudinaryModule,
     UsersModule,
+    SkillsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
