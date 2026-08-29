@@ -420,6 +420,7 @@ export class OnboardingService {
           userId,
         },
         data: {
+          isCompleted: true,
           availabilityInfoCompleted: true,
           currentStep: OnboardingStep.COMPLETED,
           completedAt: new Date(),
