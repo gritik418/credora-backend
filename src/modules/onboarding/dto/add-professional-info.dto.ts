@@ -1,5 +1,5 @@
 import z from 'zod';
-import AddProfessionalInfoSchema from '../schemas/add-professional-info.schema';
+import AddProfessionalInfoSchema from '../../onboarding/schemas/add-professional-info.schema';
 
 type AddProfessionalInfoDto = z.infer<typeof AddProfessionalInfoSchema>;
 

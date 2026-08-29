@@ -19,6 +19,7 @@ import { WorkspacesModule } from './modules/workspaces/workspaces.module';
 import { CloudinaryModule } from './providers/cloudinary/cloudinary.module';
 import { QueueModule } from './queue/queue.module';
 import { SkillsModule } from './modules/skills/skills.module';
+import { OnboardingModule } from './modules/onboarding/onboarding.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { SkillsModule } from './modules/skills/skills.module';
     CloudinaryModule,
     UsersModule,
     SkillsModule,
+    OnboardingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

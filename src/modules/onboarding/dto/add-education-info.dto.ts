@@ -1,5 +1,5 @@
 import z from 'zod';
-import AddEducationInfoSchema from '../schemas/add-education-info.schema';
+import AddEducationInfoSchema from '../../onboarding/schemas/add-education-info.schema';
 
 type AddEducationInfoDto = z.infer<typeof AddEducationInfoSchema>;
 
