@@ -17,6 +17,7 @@ import SaveSkillsDto from '../skills/dto/save-skills.dto';
 import AddEducationInfoDto from './dto/add-education-info.dto';
 import { Education } from 'generated/prisma/browser';
 import { SkillsService } from '../skills/skills.service';
+import AddAvailabilityInfoDto from './dto/add-availability-info.dto';
 
 @Injectable()
 export class OnboardingService {
@@ -382,6 +383,54 @@ export class OnboardingService {
       success: true,
       message: 'Education information added successfully.',
       nextStep: OnboardingStep.AVAILABILITY,
+    };
+  }
+
+  async addAvailabilityInfo(data: AddAvailabilityInfoDto, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.AVAILABILITY)
+      throw new BadRequestException(
+        'Please complete the previous step before proceeding.',
+      );
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.profile.update({
+        where: {
+          userId,
+        },
+        data: {
+          isOpenToWork: data.isOpenToWork,
+          isOpenToCollaborate: data.isOpenToCollaborate,
+        },
+      });
+
+      await tx.userOnboarding.update({
+        where: {
+          userId,
+        },
+        data: {
+          availabilityInfoCompleted: true,
+          currentStep: OnboardingStep.COMPLETED,
+          completedAt: new Date(),
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Availability information added successfully.',
+      nextStep: OnboardingStep.COMPLETED,
     };
   }
 }

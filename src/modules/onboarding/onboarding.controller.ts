@@ -27,6 +27,8 @@ import AddLocationInfoDto from './dto/add-location-info.dto';
 import SaveSkillsDto from '../skills/dto/save-skills.dto';
 import AddEducationInfoDto from './dto/add-education-info.dto';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
+import AddAvailabilityInfoSchema from './schemas/add-availability-info.schema';
+import AddAvailabilityInfoDto from './dto/add-availability-info.dto';
 
 @UseGuards(AuthGuard)
 @Controller('onboarding')
@@ -38,49 +40,42 @@ export class OnboardingController {
   @UseInterceptors(FileInterceptor('avatar'))
   async updateBasicInfo(
     @Body(new ZodValidationPipe(UpdateBasicInfoSchema))
-    updateBasicInfoDto: UpdateBasicInfoDto,
+    data: UpdateBasicInfoDto,
     @UploadedFile(new AvatarValidationPipe())
     file: Express.Multer.File | undefined,
     @Req() req: Request,
   ) {
-    return this.onboardingService.updateBasicInfo(
-      updateBasicInfoDto,
-      file ?? null,
-      req,
-    );
+    return this.onboardingService.updateBasicInfo(data, file ?? null, req);
   }
 
   @Patch('professional')
   @HttpCode(HttpStatus.OK)
   async addProfessionalInfo(
     @Body(new ZodValidationPipe(AddProfessionalInfoSchema))
-    addProfessionalInfoDto: AddProfessionalInfoDto,
+    data: AddProfessionalInfoDto,
     @Req() req: Request,
   ) {
-    return this.onboardingService.addProfessionalInfo(
-      addProfessionalInfoDto,
-      req,
-    );
+    return this.onboardingService.addProfessionalInfo(data, req);
   }
 
   @Patch('summary')
   @HttpCode(HttpStatus.OK)
   async addSummary(
     @Body(new ZodValidationPipe(AddSummarySchema))
-    addSummaryDto: AddSummaryDto,
+    data: AddSummaryDto,
     @Req() req: Request,
   ) {
-    return this.onboardingService.addSummary(addSummaryDto, req);
+    return this.onboardingService.addSummary(data, req);
   }
 
   @Patch('location')
   @HttpCode(HttpStatus.OK)
   async addLocationInfo(
     @Body(new ZodValidationPipe(AddLocationInfoSchema))
-    addLocationInfoDto: AddLocationInfoDto,
+    data: AddLocationInfoDto,
     @Req() req: Request,
   ) {
-    return this.onboardingService.addLocationInfo(addLocationInfoDto, req);
+    return this.onboardingService.addLocationInfo(data, req);
   }
 
   @Patch('skills')
@@ -97,9 +92,19 @@ export class OnboardingController {
   @HttpCode(HttpStatus.OK)
   async addEducationInfo(
     @Body(new ZodValidationPipe(AddEducationInfoSchema))
-    addEducationInfoDto: AddEducationInfoDto,
+    data: AddEducationInfoDto,
     @Req() req: Request,
   ) {
-    return this.onboardingService.addEducationInfo(addEducationInfoDto, req);
+    return this.onboardingService.addEducationInfo(data, req);
+  }
+
+  @Patch('availability')
+  @HttpCode(HttpStatus.OK)
+  async addAvailabilityInfo(
+    @Body(new ZodValidationPipe(AddAvailabilityInfoSchema))
+    data: AddAvailabilityInfoDto,
+    @Req() req: Request,
+  ) {
+    return this.onboardingService.addAvailabilityInfo(data, req);
   }
 }
