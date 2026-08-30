@@ -20,6 +20,7 @@ import { CloudinaryModule } from './providers/cloudinary/cloudinary.module';
 import { QueueModule } from './queue/queue.module';
 import { SkillsModule } from './modules/skills/skills.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
+import { TaskContributionsModule } from './modules/task-contributions/task-contributions.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { OnboardingModule } from './modules/onboarding/onboarding.module';
     UsersModule,
     SkillsModule,
     OnboardingModule,
+    TaskContributionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
