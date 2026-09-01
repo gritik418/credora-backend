@@ -21,6 +21,7 @@ import { QueueModule } from './queue/queue.module';
 import { SkillsModule } from './modules/skills/skills.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { TaskContributionsModule } from './modules/task-contributions/task-contributions.module';
+import { ReviewRequestsModule } from './modules/review-requests/review-requests.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { TaskContributionsModule } from './modules/task-contributions/task-contr
     SkillsModule,
     OnboardingModule,
     TaskContributionsModule,
+    ReviewRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
