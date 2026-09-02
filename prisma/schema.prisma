@@ -49,7 +49,6 @@ model User {
   tasksAssignee TaskAssignee[] @relation("TaskAssignee")
 
   reviewRequestsSent TaskReviewRequest[] @relation("TaskReviewRequester")
-  reviewRequestsReceived TaskReviewRequest[] @relation("TaskReviewRecipientMember")
   reviewRecipients TaskReviewRecipient[] @relation("TaskReviewRecipient")
 
   contributionRequestsSent TaskContributionRequest[] @relation("ContributionRequester")
@@ -485,9 +484,6 @@ model TaskReviewRequest {
   requesterId String
   requester   User @relation("TaskReviewRequester",fields: [requesterId],references: [id],onDelete: Cascade)
 
-  recipientId String
-  recipient   User @relation("TaskReviewRecipientMember",fields: [recipientId],references: [id],onDelete: Cascade)
-
   status TaskReviewStatus @default(PENDING)
 
   message String?
@@ -497,7 +493,6 @@ model TaskReviewRequest {
 
   @@index([taskId])
   @@index([requesterId])
-  @@index([recipientId])
 }
 
 enum TaskReviewStatus {
