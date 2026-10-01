@@ -116,6 +116,7 @@ model Profile {
   skills Skill[]
 
   educations Education[]
+  experiences Experience[]
 
   isOpenToWork Boolean @default(false)
   isOpenToCollaborate Boolean @default(false)
@@ -148,6 +149,40 @@ model Education {
   @@index([profileId])
 }
 
+model Experience {
+  id String @id @default(cuid())
+
+  profileId String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  company String
+  position String
+  employmentType EmploymentType?
+
+  startDate DateTime
+  endDate DateTime?
+  isCurrentlyWorking Boolean @default(false)
+
+  location String?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([profileId])
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+  SELF_EMPLOYED
+  APPRENTICESHIP
+  OTHER
+}
+
 model UserOnboarding {
   id String @id @default(cuid())
 
@@ -160,6 +195,7 @@ model UserOnboarding {
 
   basicInfoCompleted Boolean @default(false)
   professionalInfoCompleted Boolean @default(false)
+  experienceInfoCompleted Boolean @default(false)
   summaryCompleted Boolean @default(false)
   locationInfoCompleted Boolean @default(false)
   skillsCompleted Boolean @default(false)
@@ -173,6 +209,7 @@ model UserOnboarding {
 enum OnboardingStep {
   BASIC_INFO
   PROFESSIONAL
+  EXPERIENCE
   SUMMARY
   LOCATION
   SKILLS

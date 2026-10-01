@@ -18,6 +18,7 @@ import AddEducationInfoDto from './dto/add-education-info.dto';
 import { Education } from 'generated/prisma/browser';
 import { SkillsService } from '../skills/skills.service';
 import AddAvailabilityInfoDto from './dto/add-availability-info.dto';
+import AddExperienceInfoDto from './dto/add-experience-info.dto';
 
 @Injectable()
 export class OnboardingService {
@@ -62,7 +63,7 @@ export class OnboardingService {
           id: userId,
         },
         data: {
-          name: data.name,
+          ...(data.name && { name: data.name }),
           ...(uploadResult?.publicId && {
             avatarPublicId: uploadResult?.publicId,
             avatar: uploadResult?.url,
@@ -136,7 +137,7 @@ export class OnboardingService {
         },
         data: {
           professionalInfoCompleted: true,
-          currentStep: OnboardingStep.SUMMARY,
+          currentStep: OnboardingStep.EXPERIENCE,
         },
       });
     });
@@ -144,6 +145,68 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Professional information added successfully.',
+      nextStep: OnboardingStep.EXPERIENCE,
+    };
+  }
+
+  async addExperienceInfo(data: AddExperienceInfoDto, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.EXPERIENCE)
+      throw new BadRequestException(
+        'Please complete the previous step before proceeding.',
+      );
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.profile.upsert({
+        where: {
+          userId,
+        },
+        update: {
+          experiences: {
+            createMany: {
+              data: data.experiences,
+              skipDuplicates: true,
+            },
+          },
+
+          updatedAt: new Date(),
+        },
+        create: {
+          userId,
+          experiences: {
+            createMany: {
+              data: data.experiences,
+              skipDuplicates: true,
+            },
+          },
+        },
+      });
+
+      await tx.userOnboarding.update({
+        where: {
+          userId,
+        },
+        data: {
+          experienceInfoCompleted: true,
+          currentStep: OnboardingStep.SUMMARY,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Experience information added successfully.',
       nextStep: OnboardingStep.SUMMARY,
     };
   }

@@ -29,6 +29,8 @@ import AddEducationInfoDto from './dto/add-education-info.dto';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 import AddAvailabilityInfoSchema from './schemas/add-availability-info.schema';
 import AddAvailabilityInfoDto from './dto/add-availability-info.dto';
+import AddExperienceInfoSchema from './schemas/add-experience-info.schema';
+import AddExperienceInfoDto from './dto/add-experience-info.dto';
 
 @UseGuards(AuthGuard)
 @Controller('onboarding')
@@ -56,6 +58,16 @@ export class OnboardingController {
     @Req() req: Request,
   ) {
     return this.onboardingService.addProfessionalInfo(data, req);
+  }
+
+  @Patch('experience')
+  @HttpCode(HttpStatus.OK)
+  async addExperienceInfo(
+    @Body(new ZodValidationPipe(AddExperienceInfoSchema))
+    data: AddExperienceInfoDto,
+    @Req() req: Request,
+  ) {
+    return this.onboardingService.addExperienceInfo(data, req);
   }
 
   @Patch('summary')
