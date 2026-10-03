@@ -19,6 +19,7 @@ import { User } from 'generated/prisma/client';
 import { EmailProducer } from 'src/queue/producers/email.producer';
 import { ConfigService } from '@nestjs/config';
 import VerifyEmailDto from './dto/verify-email.dto';
+import ResendVerificationEmailDto from './dto/resend-verification-email.dto';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,12 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly emailProducer: EmailProducer,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    this.isEmailVerificationRequired =
+      this.configService.get<string>('EMAIL_VERIFICATION_REQUIRED') === 'true';
+  }
+
+  private readonly isEmailVerificationRequired: boolean;
 
   private getProviderName(provider: AuthProvider) {
     return provider.charAt(0).toUpperCase() + provider.slice(1).toLowerCase();
@@ -93,8 +99,10 @@ export class AuthService {
 
     const emailVerificationToken: string = uuidv4();
 
-    const hashedEmailVerificationToken: string =
-      await this.hashingService.hashValue(emailVerificationToken, 8);
+    const hashedEmailVerificationToken: string | null = this
+      .isEmailVerificationRequired
+      ? await this.hashingService.hashValue(emailVerificationToken, 8)
+      : null;
 
     const verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -115,11 +123,15 @@ export class AuthService {
           username: data.username,
           password: hashedPassword,
 
-          isEmailVerified: false,
-          isActive: false,
+          isEmailVerified: this.isEmailVerificationRequired ? false : true,
+          isActive: this.isEmailVerificationRequired ? false : true,
 
-          emailVerificationToken: hashedEmailVerificationToken,
-          emailVerificationTokenExpiry: verificationTokenExpiry,
+          emailVerificationToken: this.isEmailVerificationRequired
+            ? hashedEmailVerificationToken
+            : null,
+          emailVerificationTokenExpiry: this.isEmailVerificationRequired
+            ? verificationTokenExpiry
+            : null,
 
           ...(credentialsAccount
             ? {}
@@ -142,11 +154,15 @@ export class AuthService {
           role: data.role,
           username: data.username,
 
-          isEmailVerified: false,
-          isActive: false,
+          isEmailVerified: this.isEmailVerificationRequired ? false : true,
+          isActive: this.isEmailVerificationRequired ? false : true,
 
-          emailVerificationToken: hashedEmailVerificationToken,
-          emailVerificationTokenExpiry: verificationTokenExpiry,
+          emailVerificationToken: this.isEmailVerificationRequired
+            ? hashedEmailVerificationToken
+            : null,
+          emailVerificationTokenExpiry: this.isEmailVerificationRequired
+            ? verificationTokenExpiry
+            : null,
 
           accounts: {
             create: {
@@ -158,20 +174,34 @@ export class AuthService {
       });
     }
 
-    const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/auth/verify-email?uid=${user.id}&token=${emailVerificationToken}`;
+    if (this.isEmailVerificationRequired) {
+      const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/verify-email?uid=${user.id}&token=${emailVerificationToken}`;
 
-    await this.emailProducer.sendUserVerificationEmail({
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      verificationLink,
-    });
+      await this.emailProducer.sendUserVerificationEmail({
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        verificationLink,
+      });
 
-    return {
-      success: true,
-      message: `Verification link has been sent to your email address. Please verify your email address within 10 minutes.`,
-      userId: user.id,
-    };
+      return {
+        success: true,
+        message: `Verification link has been sent to your email address. Please verify your email address within 10 minutes.`,
+        data: {
+          userId: user.id,
+          userEmail: user.email,
+        },
+      };
+    } else {
+      return {
+        success: true,
+        message: `Account created successfully.`,
+        data: {
+          userId: user.id,
+          userEmail: user.email,
+        },
+      };
+    }
   }
 
   async login(data: LoginDto, res: Response) {
@@ -327,6 +357,52 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
+      },
+    };
+  }
+
+  async resendVerificationEmail(data: ResendVerificationEmailDto) {
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        email: data.email,
+        isEmailVerified: false,
+      },
+    });
+
+    if (!user) throw new BadRequestException('Invalid request.');
+
+    const emailVerificationToken: string = uuidv4();
+
+    const hashedEmailVerificationToken: string =
+      await this.hashingService.hashValue(emailVerificationToken, 8);
+
+    const verificationTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/verify-email?uid=${user.id}&token=${emailVerificationToken}`;
+
+    await this.prismaService.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        emailVerificationToken: hashedEmailVerificationToken,
+        emailVerificationTokenExpiry: verificationTokenExpiry,
+      },
+    });
+
+    await this.emailProducer.sendUserVerificationEmail({
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      verificationLink,
+    });
+
+    return {
+      success: true,
+      message: `Verification link has been sent to your email address. Please verify your email address within 10 minutes.`,
+      data: {
+        userId: user.id,
+        userEmail: user.email,
       },
     };
   }

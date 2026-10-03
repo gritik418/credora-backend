@@ -19,6 +19,8 @@ import LoginSchema from './schemas/login.schema';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 import VerifyEmailSchema from './schemas/verify-email.schema';
 import VerifyEmailDto from './dto/verify-email.dto';
+import ResendVerificationEmailSchema from './schemas/resend-verification-email.schema';
+import ResendVerificationEmailDto from './dto/resend-verification-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -48,6 +50,15 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.authService.verifyEmail(data, res);
+  }
+
+  @Post('resend-verification-email')
+  @HttpCode(HttpStatus.OK)
+  async resendVerificationEmail(
+    @Body(new ZodValidationPipe(ResendVerificationEmailSchema))
+    data: ResendVerificationEmailDto,
+  ) {
+    return this.authService.resendVerificationEmail(data);
   }
 
   @Get('me')
