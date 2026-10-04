@@ -8,7 +8,7 @@ const LoginSchema = z.object({
     .max(100, "Identifier can't exceed 100 characters."),
   password: z
     .string()
-    .min(1, 'Password is required')
+    .min(1, 'Password is required.')
     .min(8, 'Password must be at least 8 characters long.')
     .max(20, "Password can't exceed 20 characters.")
     .regex(/[A-Z]/, 'Password must contain at least one uppercase letter.')

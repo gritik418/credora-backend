@@ -174,6 +174,10 @@ export class AuthService {
       });
     }
 
+    if (!user) {
+      throw new BadRequestException('Failed to create user.');
+    }
+
     if (this.isEmailVerificationRequired) {
       const verificationLink = `${this.configService.get<string>('CLIENT_URL')}/verify-email?uid=${user.id}&token=${emailVerificationToken}`;
 
@@ -193,6 +197,20 @@ export class AuthService {
         },
       };
     } else {
+      await this.prismaService.profile.create({
+        data: {
+          userId: user.id,
+        },
+      });
+
+      await this.prismaService.userOnboarding.create({
+        data: {
+          userId: user.id,
+          currentStep: OnboardingStep.BASIC_INFO,
+          isCompleted: false,
+        },
+      });
+
       return {
         success: true,
         message: `Account created successfully.`,
@@ -271,13 +289,15 @@ export class AuthService {
     return {
       success: true,
       message: 'Logged in successfully.',
-      user: {
-        id: user.id,
-        avatar: user.avatar,
-        name: user.name,
-        email: user.email,
-        username: user.username,
-        role: user.role,
+      data: {
+        user: {
+          id: user.id,
+          avatar: user.avatar,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+        },
       },
     };
   }
@@ -331,10 +351,31 @@ export class AuthService {
       },
     });
 
-    await this.prismaService.userOnboarding.create({
-      data: {
+    await this.prismaService.profile.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        userId: user.id,
+      },
+      create: {
+        userId: user.id,
+      },
+    });
+
+    await this.prismaService.userOnboarding.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
         userId: user.id,
         currentStep: OnboardingStep.BASIC_INFO,
+        isCompleted: false,
+      },
+      create: {
+        userId: user.id,
+        currentStep: OnboardingStep.BASIC_INFO,
+        isCompleted: false,
       },
     });
 
@@ -351,12 +392,15 @@ export class AuthService {
     return {
       success: true,
       message: 'Email verified successfully.',
-      user: {
-        id: user.id,
-        avatar: user.avatar,
-        name: user.name,
-        email: user.email,
-        role: user.role,
+      data: {
+        user: {
+          id: user.id,
+          avatar: user.avatar,
+          name: user.name,
+          email: user.email,
+          username: user.username,
+          role: user.role,
+        },
       },
     };
   }
@@ -426,6 +470,8 @@ export class AuthService {
         lastLoginAt: true,
         isActive: true,
         username: true,
+        profile: true,
+        onboarding: true,
       },
     });
 
@@ -435,12 +481,10 @@ export class AuthService {
       throw new UnauthorizedException('Your account has been deactivated.');
     }
 
-    const { isActive, ...userInfo } = user;
-
     return {
       success: true,
       message: 'User fetched successfully.',
-      user: userInfo,
+      data: { user },
     };
   }
 }
