@@ -47,6 +47,19 @@ export class OnboardingService {
     });
     if (!user) throw new NotFoundException('User not found.');
 
+    const onboarding = await this.prismaService.userOnboarding.findUnique({
+      where: {
+        userId,
+      },
+    });
+
+    if (!onboarding) throw new NotFoundException('Onboarding not found.');
+
+    if (onboarding.currentStep !== OnboardingStep.BASIC_INFO)
+      throw new BadRequestException(
+        'Please verify your email address before proceeding.',
+      );
+
     let uploadResult: CustomUploadResult | null = null;
 
     if (file) {
@@ -64,9 +77,9 @@ export class OnboardingService {
         },
         data: {
           ...(data.name && { name: data.name }),
-          ...(uploadResult?.publicId && {
-            avatarPublicId: uploadResult?.publicId,
-            avatar: uploadResult?.url,
+          ...(uploadResult?.public_id && {
+            avatarPublicId: uploadResult?.public_id,
+            avatar: uploadResult?.secure_url,
           }),
         },
       });
@@ -90,7 +103,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Basic info updated successfully.',
-      nextStep: OnboardingStep.PROFESSIONAL,
+      data: {
+        nextStep: OnboardingStep.PROFESSIONAL,
+      },
     };
   }
 

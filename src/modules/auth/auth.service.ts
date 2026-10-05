@@ -481,6 +481,24 @@ export class AuthService {
       throw new UnauthorizedException('Your account has been deactivated.');
     }
 
+    if (!user.onboarding) {
+      await this.prismaService.userOnboarding.create({
+        data: {
+          userId: user.id,
+          currentStep: OnboardingStep.BASIC_INFO,
+          isCompleted: false,
+        },
+      });
+    }
+
+    if (!user.profile) {
+      await this.prismaService.profile.create({
+        data: {
+          userId: user.id,
+        },
+      });
+    }
+
     return {
       success: true,
       message: 'User fetched successfully.',
