@@ -470,7 +470,13 @@ export class AuthService {
         lastLoginAt: true,
         isActive: true,
         username: true,
-        profile: true,
+        profile: {
+          include: {
+            experiences: true,
+            educations: true,
+            skills: true,
+          },
+        },
         onboarding: true,
       },
     });

@@ -160,7 +160,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Professional information added successfully.',
-      nextStep: OnboardingStep.EXPERIENCE,
+      data: {
+        nextStep: OnboardingStep.EXPERIENCE,
+      },
     };
   }
 
@@ -222,7 +224,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Experience information added successfully.',
-      nextStep: OnboardingStep.SUMMARY,
+      data: {
+        nextStep: OnboardingStep.SUMMARY,
+      },
     };
   }
 
@@ -273,7 +277,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Summary added successfully.',
-      nextStep: OnboardingStep.LOCATION,
+      data: {
+        nextStep: OnboardingStep.LOCATION,
+      },
     };
   }
 
@@ -328,7 +334,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Location information added successfully.',
-      nextStep: OnboardingStep.SKILLS,
+      data: {
+        nextStep: OnboardingStep.SKILLS,
+      },
     };
   }
 
@@ -382,7 +390,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Skills added successfully.',
-      nextStep: OnboardingStep.EDUCATION,
+      data: {
+        nextStep: OnboardingStep.EDUCATION,
+      },
     };
   }
 
@@ -460,7 +470,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Education information added successfully.',
-      nextStep: OnboardingStep.AVAILABILITY,
+      data: {
+        nextStep: OnboardingStep.AVAILABILITY,
+      },
     };
   }
 
@@ -509,7 +521,9 @@ export class OnboardingService {
     return {
       success: true,
       message: 'Availability information added successfully.',
-      nextStep: OnboardingStep.COMPLETED,
+      data: {
+        nextStep: OnboardingStep.COMPLETED,
+      },
     };
   }
 }
