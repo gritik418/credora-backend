@@ -41,6 +41,34 @@ export class SkillsService {
     };
   }
 
+  async getPopularSkills(req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const skills = await this.prismaService.skill.findMany({
+      take: 10,
+      orderBy: {
+        profiles: {
+          _count: 'desc',
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Popular skills fetched successfully.',
+      data: {
+        skills: skills,
+      },
+    };
+  }
+
   async saveSkills(data: SaveSkillsDto, req: Request) {
     const userId: string = req.user.id;
 
