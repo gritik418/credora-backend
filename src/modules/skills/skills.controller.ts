@@ -30,4 +30,13 @@ export class SkillsController {
   async getPopularSkills(@Req() req: Request) {
     return this.skillsService.getPopularSkills(req);
   }
+
+  @Get('suggestions')
+  @HttpCode(HttpStatus.OK)
+  async getSkillsSuggestion(
+    @Req() req: Request,
+    @Query('search') searchQuery?: string,
+  ) {
+    return this.skillsService.getSkillsSuggestion(req, searchQuery);
+  }
 }

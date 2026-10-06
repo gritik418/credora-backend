@@ -69,6 +69,58 @@ export class SkillsService {
     };
   }
 
+  async getSkillsSuggestion(req: Request, searchQuery?: string) {
+    const userId = req.user.id;
+
+    if (!userId) {
+      throw new UnauthorizedException('Unauthorized.');
+    }
+
+    const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 50);
+
+    const query = searchQuery?.trim();
+
+    const skills = await this.prismaService.skill.findMany({
+      where: query
+        ? {
+            OR: [
+              {
+                name: {
+                  contains: query,
+                  mode: 'insensitive',
+                },
+              },
+              {
+                slug: {
+                  contains: query,
+                  mode: 'insensitive',
+                },
+              },
+            ],
+          }
+        : undefined,
+      take: limit,
+      orderBy: {
+        profiles: {
+          _count: 'desc',
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Skills suggestions fetched successfully.',
+      data: {
+        skills,
+      },
+    };
+  }
+
   async saveSkills(data: SaveSkillsDto, req: Request) {
     const userId: string = req.user.id;
 
