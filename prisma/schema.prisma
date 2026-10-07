@@ -232,16 +232,12 @@ model Organization {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
-  email       String   @unique
+  supportEmail       String   @unique
   description String?
   website     String?
   logo        String?
 
-  isEmailVerified    Boolean  @default(false)
   isActive      Boolean  @default(true)
-
-  emailVerificationToken String?
-  emailVerificationTokenExpiry DateTime?
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

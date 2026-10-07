@@ -1,17 +1,15 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
-import { QUEUES } from '../constants/queue.constants';
-import { Job } from 'bullmq';
 import { OnModuleInit } from '@nestjs/common';
-import { join } from 'path';
+import { ConfigService } from '@nestjs/config';
+import { Job } from 'bullmq';
 import { existsSync } from 'fs';
-import templateNames from '../constants/template-names.constants';
 import { readFile } from 'fs/promises';
 import * as handlebars from 'handlebars';
-import UserVerificationEmailDto from '../dto/email/user-verification.dto';
 import * as nodemailer from 'nodemailer';
-import { ConfigService } from '@nestjs/config';
+import { join } from 'path';
 import EMAIL_JOB_NAMES from '../constants/email-job-names.constants';
-import OrganizationVerificationEmailDto from '../dto/email/organization-verification.dto';
+import { QUEUES } from '../constants/queue.constants';
+import templateNames from '../constants/template-names.constants';
 
 @Processor(QUEUES.EMAIL)
 export class EmailProcessor extends WorkerHost implements OnModuleInit {
@@ -91,16 +89,6 @@ export class EmailProcessor extends WorkerHost implements OnModuleInit {
           text: 'Please verify your email address to complete your Credora account setup.',
           data: job.data,
           templateName: templateNames.userVerification,
-        });
-        break;
-
-      case EMAIL_JOB_NAMES.ORGANIZATION_VERIFICATION:
-        await this.sendEmail({
-          to: job.data.email,
-          subject: 'Verify your organization account',
-          text: 'Please verify your organization email address to complete your organization account setup.',
-          data: job.data,
-          templateName: templateNames.organizationVerification,
         });
         break;
 

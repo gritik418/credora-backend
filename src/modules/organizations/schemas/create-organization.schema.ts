@@ -5,7 +5,7 @@ const CreateOrganizationSchema = z.object({
     .string()
     .min(1, { message: 'Organization name is required.' })
     .max(50, { message: 'Organization name cannot exceed 50 characters.' }),
-  email: z.email({ message: 'Invalid email address.' }),
+  supportEmail: z.email({ message: 'Invalid support email address.' }),
 
   slug: z
     .string()
