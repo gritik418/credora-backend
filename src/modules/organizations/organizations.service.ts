@@ -1,24 +1,18 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 import { OrganizationMemberRole } from 'generated/prisma/enums';
-import { HashingService } from 'src/common/hashing/hashing.service';
 import { PrismaService } from 'src/database/prisma.service';
-import { EmailProducer } from 'src/queue/producers/email.producer';
 import CreateOrganizationDto from './dto/create-organization.dto';
 
 @Injectable()
 export class OrganizationsService {
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly hashingService: HashingService,
-    private readonly emailProducer: EmailProducer,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   async createOrganization(data: CreateOrganizationDto, req: Request) {
     const userId: string = req.user.id;
@@ -74,7 +68,9 @@ export class OrganizationsService {
     return {
       success: true,
       message: 'Organization created successfully.',
-      organizationId: organization.id,
+      data: {
+        organizationId: organization.id,
+      },
     };
   }
 
@@ -103,7 +99,42 @@ export class OrganizationsService {
     return {
       success: true,
       message: 'Organizations fetched successfully.',
-      organizations,
+      data: {
+        organizations,
+      },
+    };
+  }
+
+  async getOrganizationBySlug(slug: string, req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const organization = await this.prismaService.organization.findUnique({
+      where: {
+        slug,
+      },
+    });
+
+    if (!organization) throw new NotFoundException('Organization not found.');
+
+    const membership = await this.prismaService.organizationMember.findUnique({
+      where: {
+        userId_organizationId: {
+          organizationId: organization.id,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) throw new ForbiddenException('Access denied.');
+
+    return {
+      success: true,
+      message: 'Organization fetched successfully.',
+      data: {
+        organization,
+      },
     };
   }
 }
