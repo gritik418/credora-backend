@@ -11,6 +11,7 @@ import {
   OrganizationMemberRole,
   ProjectMemberRole,
   WorkspaceMemberRole,
+  WorkspaceStatus,
 } from 'generated/prisma/enums';
 
 @Injectable()
@@ -27,7 +28,7 @@ export class TasksService {
         workspace: {
           select: {
             id: true,
-            isActive: true,
+            status: true,
           },
         },
         organization: {
@@ -47,7 +48,7 @@ export class TasksService {
       );
     }
 
-    if (!project.workspace.isActive) {
+    if (project.workspace.status !== WorkspaceStatus.ACTIVE) {
       throw new ForbiddenException(
         'Cannot create tasks in an inactive workspace.',
       );
@@ -162,7 +163,7 @@ export class TasksService {
         workspace: {
           select: {
             id: true,
-            isActive: true,
+            status: true,
           },
         },
         organization: {
@@ -255,7 +256,9 @@ export class TasksService {
     return {
       success: true,
       message: 'Tasks fetched successfully.',
-      tasks,
+      data: {
+        tasks,
+      },
     };
   }
 }

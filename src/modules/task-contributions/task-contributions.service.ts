@@ -7,7 +7,11 @@ import {
 import { Request } from 'express';
 import { PrismaService } from 'src/database/prisma.service';
 import CreateContributionRequestDto from './dto/create-contribution-request.dto';
-import { ContributionStatus, TaskStatus } from 'generated/prisma/enums';
+import {
+  ContributionStatus,
+  TaskStatus,
+  WorkspaceStatus,
+} from 'generated/prisma/enums';
 
 @Injectable()
 export class TaskContributionsService {
@@ -46,10 +50,25 @@ export class TaskContributionsService {
             memberId: userId,
           },
         },
+        project: {
+          include: {
+            workspace: {
+              select: {
+                status: true,
+              },
+            },
+          },
+        },
       },
     });
 
     if (!task) throw new BadRequestException('Task not found.');
+
+    if (task.project?.workspace.status !== WorkspaceStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Cannot request contribution for a task in an inactive workspace.',
+      );
+    }
 
     const userIsOrganizationMember =
       task.organization?.organizationMembers.length > 0;

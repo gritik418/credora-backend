@@ -13,6 +13,7 @@ import {
   ProjectMemberRole,
   ProjectStatus,
   WorkspaceMemberRole,
+  WorkspaceStatus,
 } from 'generated/prisma/enums';
 import { WorkspaceMember } from 'generated/prisma/browser';
 
@@ -42,6 +43,8 @@ export class ProjectsService {
     });
 
     if (!workspace) throw new NotFoundException('Workspace not found.');
+    if (workspace.status !== WorkspaceStatus.ACTIVE)
+      throw new NotFoundException('Workspace not found or is archived.');
 
     const member: WorkspaceMember | null = workspace.members.length
       ? workspace.members[0]

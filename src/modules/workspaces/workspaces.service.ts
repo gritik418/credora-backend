@@ -11,6 +11,7 @@ import CreateWorkspaceDto from './dto/create-workspace.dto';
 import {
   OrganizationMemberRole,
   WorkspaceMemberRole,
+  WorkspaceStatus,
 } from 'generated/prisma/enums';
 import { Workspace } from 'generated/prisma/browser';
 
@@ -74,7 +75,7 @@ export class WorkspacesService {
         slug: data.slug,
         logo: data.logo,
         organizationId,
-        isActive: true,
+        status: WorkspaceStatus.ACTIVE,
         createdById: userId,
         createdAt: new Date(),
         members: {

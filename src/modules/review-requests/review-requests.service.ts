@@ -5,10 +5,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { TaskReviewStatus, TaskStatus } from 'generated/prisma/enums';
+import {
+  TaskReviewStatus,
+  TaskStatus,
+  WorkspaceStatus,
+} from 'generated/prisma/enums';
 import { PrismaService } from 'src/database/prisma.service';
 import RaiseReviewRequestDto from './dto/raise-review-request.dto';
-import { success } from 'zod';
 
 @Injectable()
 export class ReviewRequestsService {
@@ -53,6 +56,11 @@ export class ReviewRequestsService {
                 id: true,
               },
             },
+            workspace: {
+              select: {
+                status: true,
+              },
+            },
           },
         },
       },
@@ -61,7 +69,15 @@ export class ReviewRequestsService {
     if (!task) throw new BadRequestException('Task not found.');
 
     if (!task.organization.isActive) {
-      throw new BadRequestException('Organization is not active.');
+      throw new ForbiddenException(
+        'Cannot request review for a task in an inactive organization.',
+      );
+    }
+
+    if (task.project?.workspace.status !== WorkspaceStatus.ACTIVE) {
+      throw new ForbiddenException(
+        'Cannot request review for a task in an inactive workspace.',
+      );
     }
 
     if (!task.organization.organizationMembers.length) {

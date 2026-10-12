@@ -57,6 +57,8 @@ model User {
   contributionsVerified TaskContribution[] @relation("TaskContributionVerifier")
   contributions TaskContribution[]
 
+  workspacesArchived   Workspace[] @relation("WorkspaceArchivedBy")
+
   posts        Post[] @relation("UserPosts")
   reactions    PostReaction[] @relation("UserPostReactions")
   comments     PostComment[]  @relation("UserPostComments")
@@ -230,6 +232,7 @@ model Skill {
 
 model Organization {
   id          String   @id @default(cuid())
+
   name        String
   slug        String   @unique
   supportEmail       String
@@ -285,6 +288,7 @@ model OrganizationInvite {
 
   role OrganizationMemberRole @default(MEMBER)
   status OrganizationInviteStatus @default(PENDING)
+  
   department     String?
   designation    String?
 
@@ -334,7 +338,11 @@ model Workspace {
   description String?
   logo        String?
 
-  isActive    Boolean  @default(true)
+  status      WorkspaceStatus @default(ACTIVE)
+
+  archivedAt  DateTime?
+  archivedById String?
+  archivedBy   User?            @relation("WorkspaceArchivedBy", fields: [archivedById], references: [id], onDelete: SetNull)
 
   createdById String
   createdBy User @relation(fields: [createdById], references: [id], onDelete: Restrict)
@@ -347,6 +355,11 @@ model Workspace {
 
   @@unique([organizationId, slug])
   @@index([organizationId])
+}
+
+enum WorkspaceStatus {
+  ACTIVE
+  ARCHIVED
 }
 
 model WorkspaceMember {

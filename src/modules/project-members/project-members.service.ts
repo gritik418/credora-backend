@@ -12,6 +12,7 @@ import {
   OrganizationMemberRole,
   ProjectMemberRole,
   WorkspaceMemberRole,
+  WorkspaceStatus,
 } from 'generated/prisma/enums';
 
 @Injectable()
@@ -39,7 +40,7 @@ export class ProjectMembersService {
       },
       include: {
         workspace: {
-          select: { id: true, isActive: true },
+          select: { id: true, status: true },
         },
         organization: {
           select: { id: true, isActive: true },
@@ -55,7 +56,7 @@ export class ProjectMembersService {
       throw new NotFoundException('Workspace not found.');
     }
 
-    if (!project.workspace.isActive) {
+    if (project.workspace.status !== WorkspaceStatus.ACTIVE) {
       throw new BadRequestException(
         'Cannot add members to an inactive workspace.',
       );
