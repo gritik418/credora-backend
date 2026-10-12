@@ -5,9 +5,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import CreateProjectDto from './dto/create-project.dto';
 import { Request } from 'express';
-import { PrismaService } from 'src/database/prisma.service';
+import { WorkspaceMember } from 'generated/prisma/browser';
 import {
   OrganizationMemberRole,
   ProjectMemberRole,
@@ -15,7 +14,8 @@ import {
   WorkspaceMemberRole,
   WorkspaceStatus,
 } from 'generated/prisma/enums';
-import { WorkspaceMember } from 'generated/prisma/browser';
+import { PrismaService } from 'src/database/prisma.service';
+import CreateProjectDto from './dto/create-project.dto';
 
 @Injectable()
 export class ProjectsService {

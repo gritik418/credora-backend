@@ -6,9 +6,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { OrganizationMemberRole } from 'generated/prisma/enums';
+import {
+  OrganizationMemberRole,
+  WorkspaceStatus,
+} from 'generated/prisma/enums';
 import { PrismaService } from 'src/database/prisma.service';
 import CreateOrganizationDto from './dto/create-organization.dto';
+import { Project } from 'generated/prisma/client';
 
 @Injectable()
 export class OrganizationsService {
@@ -134,6 +138,69 @@ export class OrganizationsService {
       message: 'Organization fetched successfully.',
       data: {
         organization,
+      },
+    };
+  }
+
+  async getOrganizationProjects(organizationId: string, req: Request) {
+    const userId = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const organizationMember =
+      await this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            organizationId,
+            userId,
+          },
+        },
+      });
+
+    if (!organizationMember)
+      throw new ForbiddenException(
+        'You are not authorized to view projects in this organization.',
+      );
+
+    if (!organizationMember.isActive)
+      throw new ForbiddenException(
+        'Your account is inactive. Please contact the organization admin to activate your account.',
+      );
+
+    const isOrgAdminOrOwner =
+      organizationMember.role === OrganizationMemberRole.ADMIN ||
+      organizationMember.role === OrganizationMemberRole.OWNER;
+
+    let projects: Project[] = [];
+
+    if (isOrgAdminOrOwner) {
+      projects = await this.prismaService.project.findMany({
+        where: {
+          organizationId,
+        },
+      });
+    } else {
+      projects = await this.prismaService.project.findMany({
+        where: {
+          workspace: {
+            members: {
+              some: {
+                userId,
+              },
+            },
+            status: WorkspaceStatus.ACTIVE,
+          },
+          organization: {
+            isActive: true,
+          },
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Projects fetched successfully.',
+      data: {
+        projects,
       },
     };
   }

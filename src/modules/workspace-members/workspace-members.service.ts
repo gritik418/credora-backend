@@ -11,6 +11,7 @@ import AddWorkspaceMembersDto from './dto/add-workspace-members.dto';
 import {
   OrganizationMemberRole,
   WorkspaceMemberRole,
+  WorkspaceStatus,
 } from 'generated/prisma/enums';
 
 @Injectable()
@@ -50,7 +51,7 @@ export class WorkspaceMembersService {
       throw new NotFoundException('Workspace not found.');
     }
 
-    if (!workspace.isActive) {
+    if (workspace.status !== WorkspaceStatus.ACTIVE) {
       throw new BadRequestException(
         'Cannot add members to an inactive workspace.',
       );
@@ -162,7 +163,9 @@ export class WorkspaceMembersService {
     return {
       success: true,
       message: 'Workspace members added successfully.',
-      addedCount: validMemberIds.length,
+      data: {
+        addedCount: validMemberIds.length,
+      },
     };
   }
 
@@ -262,7 +265,9 @@ export class WorkspaceMembersService {
     return {
       success: true,
       message: 'Workspace members fetched successfully.',
-      members,
+      data: {
+        members,
+      },
     };
   }
 }

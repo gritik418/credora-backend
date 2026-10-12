@@ -45,4 +45,16 @@ export class OrganizationsController {
   getOrganizationBySlug(@Param('slug') slug: string, @Req() req: Request) {
     return this.organizationsService.getOrganizationBySlug(slug, req);
   }
+
+  @Get(':organizationId/projects')
+  @HttpCode(HttpStatus.OK)
+  getOrganizationProjects(
+    @Param('organizationId') organizationId: string,
+    @Req() req: Request,
+  ) {
+    return this.organizationsService.getOrganizationProjects(
+      organizationId,
+      req,
+    );
+  }
 }
