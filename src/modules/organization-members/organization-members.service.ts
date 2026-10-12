@@ -35,12 +35,26 @@ export class OrganizationMembersService {
       where: {
         organizationId,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            username: true,
+            avatar: true,
+            isActive: true,
+          },
+        },
+      },
     });
 
     return {
       success: true,
       message: 'Members fetched successfully.',
-      members,
+      data: {
+        members,
+      },
     };
   }
 }

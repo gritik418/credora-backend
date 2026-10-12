@@ -72,13 +72,25 @@ export class OrganizationInvitesService {
         role: true,
         status: true,
         expiresAt: true,
+        createdAt: true,
+        invitedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            isActive: true,
+          },
+        },
       },
     });
 
     return {
       success: true,
       message: 'Invites fetched successfully.',
-      invites,
+      data: {
+        invites,
+      },
     };
   }
 
@@ -276,7 +288,9 @@ export class OrganizationInvitesService {
     return {
       success: true,
       message: 'Invite sent successfully.',
-      inviteId: invite.id,
+      data: {
+        inviteId: invite.id,
+      },
     };
   }
 

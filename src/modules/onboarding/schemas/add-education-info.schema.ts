@@ -52,7 +52,6 @@ const EducationSchema = z
 const AddEducationInfoSchema = z.object({
   educations: z
     .array(EducationSchema)
-    .min(1, 'Please add at least one education record.')
     .max(10, 'Maximum 10 education records allowed.'),
 });
 

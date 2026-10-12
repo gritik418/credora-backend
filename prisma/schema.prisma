@@ -232,7 +232,7 @@ model Organization {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
-  supportEmail       String   @unique
+  supportEmail       String
   description String?
   website     String?
   logo        String?

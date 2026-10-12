@@ -57,7 +57,6 @@ const ExperienceSchema = z
 const AddExperienceInfoSchema = z.object({
   experiences: z
     .array(ExperienceSchema)
-    .min(1, 'Please add at least one experience record.')
     .max(20, 'Maximum 20 experience records allowed.'),
 });
 
