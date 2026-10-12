@@ -73,6 +73,8 @@ export class OrganizationInvitesService {
         status: true,
         expiresAt: true,
         createdAt: true,
+        department: true,
+        designation: true,
         invitedBy: {
           select: {
             id: true,
@@ -262,6 +264,8 @@ export class OrganizationInvitesService {
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         status: OrganizationInviteStatus.PENDING,
         token: hashedToken,
+        department: data.department,
+        designation: data.designation,
       },
     });
 
@@ -283,6 +287,8 @@ export class OrganizationInvitesService {
         initial: organization.name.charAt(0).toUpperCase(),
       },
       role: data.role,
+      department: data.department ?? '',
+      designation: data.designation ?? '',
     });
 
     return {
@@ -374,6 +380,8 @@ export class OrganizationInvitesService {
         organizationId: true,
         role: true,
         invitedById: true,
+        department: true,
+        designation: true,
         organization: {
           select: {
             name: true,
@@ -480,6 +488,8 @@ export class OrganizationInvitesService {
         initial: invite.organization.name.charAt(0).toUpperCase(),
       },
       role: invite.role,
+      department: invite.department ?? '',
+      designation: invite.designation ?? '',
     });
 
     return {
@@ -560,6 +570,8 @@ export class OrganizationInvitesService {
         role: invite.role,
         isActive: true,
         joinedAt: new Date(),
+        department: invite.department ?? '',
+        designation: invite.designation ?? '',
       },
     });
 

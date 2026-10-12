@@ -256,6 +256,8 @@ model OrganizationMember {
   organizationId String
 
   role OrganizationMemberRole @default(MEMBER)
+  department     String?
+  designation    String?
 
   isActive Boolean @default(true)
 
@@ -283,6 +285,8 @@ model OrganizationInvite {
 
   role OrganizationMemberRole @default(MEMBER)
   status OrganizationInviteStatus @default(PENDING)
+  department     String?
+  designation    String?
 
   token       String   @unique
   expiresAt   DateTime

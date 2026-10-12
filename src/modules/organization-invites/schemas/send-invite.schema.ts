@@ -8,6 +8,8 @@ const SendInviteSchema = z
       .enum(OrganizationMemberRole)
       .optional()
       .default(OrganizationMemberRole.MEMBER),
+    department: z.string().optional(),
+    designation: z.string().optional(),
   })
   .superRefine(({ role }, ctx: RefinementCtx) => {
     if (role === OrganizationMemberRole.OWNER) {

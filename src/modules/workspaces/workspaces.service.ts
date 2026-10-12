@@ -89,7 +89,9 @@ export class WorkspacesService {
     return {
       success: true,
       message: 'Workspace created successfully.',
-      workspace,
+      data: {
+        workspace,
+      },
     };
   }
 
@@ -147,7 +149,9 @@ export class WorkspacesService {
     return {
       success: true,
       message: 'Workspaces fetched successfully.',
-      workspaces,
+      data: {
+        workspaces,
+      },
     };
   }
 }

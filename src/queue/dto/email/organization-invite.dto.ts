@@ -19,6 +19,9 @@ type OrganizationInviteDto = {
 
   invitationLink: string;
   recipientEmail: string;
+
+  department: string;
+  designation: string;
 };
 
 export default OrganizationInviteDto;
