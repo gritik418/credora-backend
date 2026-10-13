@@ -204,4 +204,54 @@ export class OrganizationsService {
       },
     };
   }
+
+  async selectOrganization(organizationId: string, req: Request) {
+    const userId = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const organizationMember =
+      await this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            organizationId,
+            userId,
+          },
+        },
+      });
+
+    if (!organizationMember)
+      throw new ForbiddenException(
+        'You are not authorized to switch to this organization.',
+      );
+
+    if (!organizationMember.isActive)
+      throw new ForbiddenException(
+        'Your account is inactive. Please contact the organization admin to activate your account.',
+      );
+
+    const organization = await this.prismaService.organization.findUnique({
+      where: {
+        id: organizationId,
+      },
+    });
+
+    if (!organization) throw new NotFoundException('Organization not found.');
+
+    await this.prismaService.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        selectedOrganizationId: organizationId,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Organization selected successfully.',
+      data: {
+        organization,
+      },
+    };
+  }
 }

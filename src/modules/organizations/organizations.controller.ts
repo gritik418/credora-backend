@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -56,5 +57,14 @@ export class OrganizationsController {
       organizationId,
       req,
     );
+  }
+
+  @Patch(':organizationId/select')
+  @HttpCode(HttpStatus.OK)
+  selectOrganization(
+    @Param('organizationId') organizationId: string,
+    @Req() req: Request,
+  ) {
+    return this.organizationsService.selectOrganization(organizationId, req);
   }
 }
