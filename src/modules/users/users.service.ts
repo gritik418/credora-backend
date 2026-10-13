@@ -138,4 +138,32 @@ export class UsersService {
 
     return uploadResult;
   }
+
+  async getSelectedOrganization(req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        selectedOrganization: true,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found.');
+
+    if (!user.selectedOrganization)
+      throw new NotFoundException('No organization selected.');
+
+    return {
+      success: true,
+      message: 'Selected organization fetched successfully.',
+      data: {
+        organization: user.selectedOrganization,
+      },
+    };
+  }
 }

@@ -27,6 +27,12 @@ export class UsersController {
     return this.usersService.getMe(req);
   }
 
+  @Get('me/selected-organization')
+  @HttpCode(HttpStatus.OK)
+  async getSelectedOrganization(@Req() req: Request) {
+    return this.usersService.getSelectedOrganization(req);
+  }
+
   @Patch('username')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(UpdateUsernameSchema))

@@ -66,6 +66,10 @@ model User {
   profile Profile?
   onboarding UserOnboarding?
 
+  selectedOrganizationId String?
+  selectedOrganization  Organization? @relation("UserSelectedOrganization",fields: [selectedOrganizationId],references: [id],onDelete: SetNull)
+
+
   @@index([username])
   @@index([email])
 }
@@ -250,6 +254,8 @@ model Organization {
   workspaces Workspace[]
   projects Project[]
   tasks Task[]
+
+  selectedByUsers       User[] @relation("UserSelectedOrganization")
 }
 
 model OrganizationMember {
