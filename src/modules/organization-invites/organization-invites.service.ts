@@ -555,24 +555,35 @@ export class OrganizationInvitesService {
     if (!isTokenValid)
       throw new BadRequestException('Invalid invitation link.');
 
-    await this.prismaService.organizationInvite.update({
-      where: { id: invite.id },
-      data: {
-        status: OrganizationInviteStatus.ACCEPTED,
-        acceptedAt: new Date(),
-      },
-    });
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.organizationInvite.update({
+        where: { id: invite.id },
+        data: {
+          status: OrganizationInviteStatus.ACCEPTED,
+          acceptedAt: new Date(),
+        },
+      });
 
-    await this.prismaService.organizationMember.create({
-      data: {
-        organizationId: invite.organizationId,
-        userId,
-        role: invite.role,
-        isActive: true,
-        joinedAt: new Date(),
-        department: invite.department ?? '',
-        designation: invite.designation ?? '',
-      },
+      await tx.organizationMember.create({
+        data: {
+          organizationId: invite.organizationId,
+          userId,
+          role: invite.role,
+          isActive: true,
+          joinedAt: new Date(),
+          department: invite.department ?? '',
+          designation: invite.designation ?? '',
+        },
+      });
+
+      await tx.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          selectedOrganizationId: invite.organizationId,
+        },
+      });
     });
 
     return {

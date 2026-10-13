@@ -70,6 +70,9 @@ model User {
   selectedOrganization  Organization? @relation("UserSelectedOrganization",fields: [selectedOrganizationId],references: [id],onDelete: SetNull)
 
 
+  selectedWorkspaceId String?
+  selectedWorkspace  Workspace? @relation("UserSelectedWorkspace",fields: [selectedWorkspaceId],references: [id],onDelete: SetNull)
+
   @@index([username])
   @@index([email])
 }
@@ -358,6 +361,8 @@ model Workspace {
 
   members  WorkspaceMember[]
   projects Project[]
+
+  selectedByUsers       User[] @relation("UserSelectedWorkspace")
 
   @@unique([organizationId, slug])
   @@index([organizationId])

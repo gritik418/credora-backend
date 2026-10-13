@@ -66,6 +66,15 @@ export class OrganizationsService {
         },
       });
 
+      await tx.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          selectedOrganizationId: organization.id,
+        },
+      });
+
       return organization;
     });
 
@@ -205,7 +214,7 @@ export class OrganizationsService {
     };
   }
 
-  async selectOrganization(organizationId: string, req: Request) {
+  async switchOrganization(organizationId: string, req: Request) {
     const userId = req.user.id;
     if (!userId) throw new UnauthorizedException('Unauthorized.');
 

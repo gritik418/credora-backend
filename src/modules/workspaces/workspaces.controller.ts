@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -51,6 +52,20 @@ export class WorkspacesController {
     return this.workspacesService.getWorkspaceBySlug(
       organizationId,
       workspaceSlug,
+      req,
+    );
+  }
+
+  @Patch(':workspaceId/switch')
+  @HttpCode(HttpStatus.OK)
+  async switchWorkspace(
+    @Param('organizationId') organizationId: string,
+    @Param('workspaceId') workspaceId: string,
+    @Req() req: Request,
+  ) {
+    return this.workspacesService.switchWorkspace(
+      workspaceId,
+      organizationId,
       req,
     );
   }

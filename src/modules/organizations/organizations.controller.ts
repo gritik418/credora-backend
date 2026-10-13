@@ -59,12 +59,12 @@ export class OrganizationsController {
     );
   }
 
-  @Patch(':organizationId/select')
+  @Patch(':organizationId/switch')
   @HttpCode(HttpStatus.OK)
-  selectOrganization(
+  switchOrganization(
     @Param('organizationId') organizationId: string,
     @Req() req: Request,
   ) {
-    return this.organizationsService.selectOrganization(organizationId, req);
+    return this.organizationsService.switchOrganization(organizationId, req);
   }
 }

@@ -227,4 +227,78 @@ export class WorkspacesService {
       },
     };
   }
+
+  async switchWorkspace(
+    workspaceId: string,
+    organizationId: string,
+    req: Request,
+  ) {
+    const userId = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const workspaceMember = await this.prismaService.workspaceMember.findUnique(
+      {
+        where: {
+          workspaceId_userId: {
+            userId,
+            workspaceId,
+          },
+        },
+      },
+    );
+
+    const organizationMember =
+      await this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId,
+          },
+        },
+      });
+
+    if (!organizationMember)
+      throw new ForbiddenException(
+        'You are not authorized to switch to this workspace.',
+      );
+
+    const isOrgAdminOrOwner =
+      organizationMember.role === OrganizationMemberRole.OWNER ||
+      organizationMember.role === OrganizationMemberRole.ADMIN;
+
+    if (!workspaceMember && !isOrgAdminOrOwner)
+      throw new ForbiddenException(
+        'You are not authorized to switch to this workspace.',
+      );
+
+    if (!organizationMember.isActive)
+      throw new ForbiddenException(
+        'Your account is inactive. Please contact the organization admin to activate your account.',
+      );
+
+    const workspace = await this.prismaService.workspace.findUnique({
+      where: {
+        id: workspaceId,
+      },
+    });
+
+    if (!workspace) throw new NotFoundException('Workspace not found.');
+
+    await this.prismaService.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        selectedWorkspaceId: workspace.id,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Workspace switched successfully.',
+      data: {
+        workspace,
+      },
+    };
+  }
 }
