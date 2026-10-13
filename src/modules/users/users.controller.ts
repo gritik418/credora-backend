@@ -33,6 +33,12 @@ export class UsersController {
     return this.usersService.getSelectedOrganization(req);
   }
 
+  @Get('me/selected-workspace')
+  @HttpCode(HttpStatus.OK)
+  async getSelectedWorkspace(@Req() req: Request) {
+    return this.usersService.getSelectedWorkspace(req);
+  }
+
   @Patch('username')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(UpdateUsernameSchema))

@@ -166,4 +166,32 @@ export class UsersService {
       },
     };
   }
+
+  async getSelectedWorkspace(req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      include: {
+        selectedWorkspace: true,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found.');
+
+    if (!user.selectedWorkspace)
+      throw new NotFoundException('No workspace selected.');
+
+    return {
+      success: true,
+      message: 'Selected workspace fetched successfully.',
+      data: {
+        workspace: user.selectedWorkspace,
+      },
+    };
+  }
 }
