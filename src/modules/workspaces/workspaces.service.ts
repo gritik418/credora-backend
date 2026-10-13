@@ -155,4 +155,76 @@ export class WorkspacesService {
       },
     };
   }
+
+  async getWorkspaceBySlug(
+    organizationId: string,
+    workspaceSlug: string,
+    req: Request,
+  ) {
+    const userId: string = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const workspace = await this.prismaService.workspace.findFirst({
+      where: {
+        slug: workspaceSlug,
+        organizationId,
+      },
+    });
+
+    if (!workspace) throw new NotFoundException('Workspace not found.');
+
+    const organizationMember =
+      await this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId,
+          },
+        },
+        select: {
+          id: true,
+          isActive: true,
+          role: true,
+        },
+      });
+
+    if (!organizationMember)
+      throw new ForbiddenException(
+        'You are not a member of this organization.',
+      );
+    if (!organizationMember.isActive)
+      throw new ForbiddenException(
+        'You are not an active member of this organization.',
+      );
+
+    const workspaceMember = await this.prismaService.workspaceMember.findUnique(
+      {
+        where: {
+          workspaceId_userId: {
+            workspaceId: workspace.id,
+            userId,
+          },
+        },
+        select: {
+          id: true,
+          role: true,
+        },
+      },
+    );
+
+    const isOrgAdminOrOwner =
+      organizationMember.role === OrganizationMemberRole.OWNER ||
+      organizationMember.role === OrganizationMemberRole.ADMIN;
+
+    if (!workspaceMember && !isOrgAdminOrOwner)
+      throw new ForbiddenException('You are not a member of this workspace.');
+
+    return {
+      success: true,
+      message: 'Workspace fetched successfully.',
+      data: {
+        workspace,
+      },
+    };
+  }
 }

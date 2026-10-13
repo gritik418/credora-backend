@@ -40,4 +40,18 @@ export class WorkspacesController {
   ) {
     return this.workspacesService.getWorkspaces(organizationId, req);
   }
+
+  @Get(':workspaceSlug')
+  @HttpCode(HttpStatus.OK)
+  async getWorkspaceBySlug(
+    @Param('organizationId') organizationId: string,
+    @Param('workspaceSlug') workspaceSlug: string,
+    @Req() req: Request,
+  ) {
+    return this.workspacesService.getWorkspaceBySlug(
+      organizationId,
+      workspaceSlug,
+      req,
+    );
+  }
 }
