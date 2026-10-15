@@ -7,7 +7,6 @@ const CreateProjectSchema = z.object({
     .min(1, 'Project slug is required')
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Invalid project slug'),
   description: z.string().optional(),
-  logo: z.url().optional(),
   startDate: z.coerce.date().default(new Date()),
   dueDate: z.coerce.date(),
 });

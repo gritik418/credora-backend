@@ -410,8 +410,6 @@ model Project {
   slug        String
   description String?
 
-  logo        String?
-
   status      ProjectStatus @default(ACTIVE)
 
   startDate   DateTime?

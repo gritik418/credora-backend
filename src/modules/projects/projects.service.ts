@@ -95,7 +95,6 @@ export class ProjectsService {
         name: data.name,
         description: data.description,
         slug: data.slug,
-        logo: data.logo,
         dueDate: data.dueDate,
         startDate: data.startDate,
         status: ProjectStatus.ACTIVE,
@@ -117,7 +116,9 @@ export class ProjectsService {
     return {
       success: true,
       message: 'Project created successfully.',
-      project,
+      data: {
+        project,
+      },
     };
   }
 }
