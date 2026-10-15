@@ -16,6 +16,7 @@ import {
 } from 'generated/prisma/enums';
 import { PrismaService } from 'src/database/prisma.service';
 import CreateProjectDto from './dto/create-project.dto';
+import { Project } from 'generated/prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -118,6 +119,91 @@ export class ProjectsService {
       message: 'Project created successfully.',
       data: {
         project,
+      },
+    };
+  }
+
+  async getProjects(workspaceId: string, req: Request) {
+    const userId = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const workspace = await this.prismaService.workspace.findUnique({
+      where: {
+        id: workspaceId,
+      },
+      include: {
+        members: {
+          where: {
+            userId,
+          },
+        },
+      },
+    });
+
+    if (!workspace) throw new NotFoundException('Workspace not found.');
+
+    if (workspace.status !== WorkspaceStatus.ACTIVE)
+      throw new NotFoundException('Workspace not found or is archived.');
+
+    const member: WorkspaceMember | null = workspace.members.length
+      ? workspace.members[0]
+      : null;
+
+    const organizationMember =
+      await this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            organizationId: workspace.organizationId,
+            userId,
+          },
+        },
+      });
+
+    if (!organizationMember)
+      throw new ForbiddenException(
+        'You are not authorized to view projects in this workspace.',
+      );
+
+    if (!organizationMember.isActive)
+      throw new ForbiddenException(
+        'Your account is inactive. Please contact the organization admin to activate your account.',
+      );
+
+    const isOrgAdminOrOwner =
+      organizationMember.role === OrganizationMemberRole.ADMIN ||
+      organizationMember.role === OrganizationMemberRole.OWNER;
+
+    if (!isOrgAdminOrOwner && !member) {
+      throw new ForbiddenException(
+        'You are not authorized to view projects in this workspace.',
+      );
+    }
+
+    let projects: Project[] = [];
+
+    if (isOrgAdminOrOwner || member?.role === WorkspaceMemberRole.ADMIN) {
+      projects = await this.prismaService.project.findMany({
+        where: {
+          workspaceId,
+        },
+      });
+    } else {
+      projects = await this.prismaService.project.findMany({
+        where: {
+          workspaceId,
+          members: {
+            some: {
+              userId,
+            },
+          },
+        },
+      });
+    }
+    return {
+      success: true,
+      message: 'Projects fetched successfully.',
+      data: {
+        projects,
       },
     };
   }

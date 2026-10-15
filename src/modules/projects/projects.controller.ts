@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -28,5 +29,14 @@ export class ProjectsController {
     @Req() req: Request,
   ) {
     return this.projectsService.createProject(workspaceId, data, req);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getProjects(
+    @Param('workspaceId') workspaceId: string,
+    @Req() req: Request,
+  ) {
+    return this.projectsService.getProjects(workspaceId, req);
   }
 }
