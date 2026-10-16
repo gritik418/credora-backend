@@ -91,27 +91,31 @@ export class ProjectsService {
     if (existingProject)
       throw new BadRequestException('Project slug already exists.');
 
-    const project = await this.prismaService.project.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        slug: data.slug,
-        dueDate: data.dueDate,
-        startDate: data.startDate,
-        status: ProjectStatus.ACTIVE,
-        organizationId: workspace.organizationId,
-        workspaceId,
-        createdById: userId,
-        createdAt: new Date(),
-      },
-    });
+    const project = await this.prismaService.$transaction(async (tx) => {
+      const project = await tx.project.create({
+        data: {
+          name: data.name,
+          description: data.description,
+          slug: data.slug,
+          dueDate: data.dueDate,
+          startDate: data.startDate,
+          status: ProjectStatus.ACTIVE,
+          organizationId: workspace.organizationId,
+          workspaceId,
+          createdById: userId,
+          createdAt: new Date(),
+        },
+      });
 
-    await this.prismaService.projectMember.create({
-      data: {
-        projectId: project.id,
-        userId,
-        role: ProjectMemberRole.ADMIN,
-      },
+      await tx.projectMember.create({
+        data: {
+          projectId: project.id,
+          userId,
+          role: ProjectMemberRole.ADMIN,
+        },
+      });
+
+      return project;
     });
 
     return {

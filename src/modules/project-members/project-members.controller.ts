@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
@@ -29,5 +30,11 @@ export class ProjectMembersController {
     @Req() req: Request,
   ) {
     return this.projectMembersService.addMembers(projectId, data, req);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getMembers(@Param('projectId') projectId: string, @Req() req: Request) {
+    return this.projectMembersService.getProjectMembers(projectId, req);
   }
 }

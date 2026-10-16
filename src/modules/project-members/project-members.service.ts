@@ -220,4 +220,139 @@ export class ProjectMembersService {
       addedCount: validMemberIds.length,
     };
   }
+
+  async getProjectMembers(projectId: string, req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    if (!projectId) throw new BadRequestException('Project ID is required.');
+
+    const project = await this.prismaService.project.findUnique({
+      where: {
+        id: projectId,
+      },
+      include: {
+        workspace: {
+          select: { id: true, status: true },
+        },
+        organization: {
+          select: { id: true, isActive: true },
+        },
+      },
+    });
+
+    if (!project) {
+      throw new NotFoundException('Project not found.');
+    }
+
+    if (!project.workspace) {
+      throw new NotFoundException('Workspace not found.');
+    }
+
+    if (project.workspace.status !== WorkspaceStatus.ACTIVE) {
+      throw new BadRequestException(
+        'Cannot get members of a project in an inactive workspace.',
+      );
+    }
+
+    if (!project.organization.isActive) {
+      throw new BadRequestException(
+        'Cannot get members of a project in an inactive organization.',
+      );
+    }
+
+    const [
+      requesterOrgMembership,
+      requesterWorkspaceMembership,
+      isProjectMember,
+    ] = await Promise.all([
+      this.prismaService.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId: project.organizationId,
+          },
+        },
+        select: {
+          role: true,
+          id: true,
+          isActive: true,
+        },
+      }),
+
+      this.prismaService.workspaceMember.findUnique({
+        where: {
+          workspaceId_userId: {
+            userId,
+            workspaceId: project.workspaceId,
+          },
+        },
+        select: {
+          role: true,
+          id: true,
+        },
+      }),
+
+      this.prismaService.projectMember.findUnique({
+        where: {
+          projectId_userId: {
+            projectId,
+            userId,
+          },
+        },
+      }),
+    ]);
+
+    if (!requesterOrgMembership) {
+      throw new ForbiddenException(
+        'You are not a member of this organization.',
+      );
+    }
+
+    if (!requesterOrgMembership.isActive) {
+      throw new ForbiddenException(
+        'You are not an active member of this organization.',
+      );
+    }
+
+    const isOrgAdminOrOwner =
+      requesterOrgMembership.role === OrganizationMemberRole.ADMIN ||
+      requesterOrgMembership.role === OrganizationMemberRole.OWNER;
+
+    const isWorkspaceAdmin =
+      requesterWorkspaceMembership?.role === WorkspaceMemberRole.ADMIN;
+
+    if (!isOrgAdminOrOwner && !isWorkspaceAdmin && !isProjectMember) {
+      throw new ForbiddenException(
+        'You do not have permission to view members of this project.',
+      );
+    }
+
+    const members = await this.prismaService.projectMember.findMany({
+      where: {
+        projectId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Project members fetched successfully.',
+      data: {
+        members,
+      },
+    };
+  }
 }
