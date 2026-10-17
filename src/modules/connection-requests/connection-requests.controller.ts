@@ -4,6 +4,8 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
   Req,
   UseGuards,
@@ -33,5 +35,17 @@ export class ConnectionRequestsController {
   @HttpCode(HttpStatus.OK)
   async getConnectionRequests(@Req() req: Request) {
     return this.connectionRequestsService.getConnectionRequests(req);
+  }
+
+  @Patch(':requestId/accept')
+  @HttpCode(HttpStatus.OK)
+  async acceptConnectionRequest(
+    @Param('requestId') requestId: string,
+    @Req() req: Request,
+  ) {
+    return this.connectionRequestsService.acceptConnectionRequest(
+      requestId,
+      req,
+    );
   }
 }

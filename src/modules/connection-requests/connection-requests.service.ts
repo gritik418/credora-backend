@@ -107,4 +107,79 @@ export class ConnectionRequestsService {
       data: { connectionRequests },
     };
   }
+
+  async acceptConnectionRequest(requestId: string, req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const connectionRequest =
+      await this.prismaService.connectionRequest.findUnique({
+        where: {
+          id: requestId,
+        },
+      });
+
+    if (!connectionRequest)
+      throw new BadRequestException('Connection request not found.');
+
+    if (connectionRequest.receiverId !== userId) {
+      throw new BadRequestException(
+        'You are not authorized to accept this connection request.',
+      );
+    }
+
+    if (connectionRequest.status === ConnectionRequestStatus.EXPIRED) {
+      throw new BadRequestException('Connection request has expired.');
+    }
+
+    if (connectionRequest.status !== ConnectionRequestStatus.PENDING) {
+      throw new BadRequestException(
+        'Connection request is not pending. It might be already accepted or rejected.',
+      );
+    }
+
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.connectionRequest.update({
+        where: {
+          id: requestId,
+        },
+        data: {
+          status: ConnectionRequestStatus.ACCEPTED,
+        },
+      });
+
+      const isConnectionRequestToSameUser =
+        await tx.connectionRequest.findFirst({
+          where: {
+            senderId: connectionRequest.receiverId,
+            receiverId: connectionRequest.senderId,
+            status: ConnectionRequestStatus.PENDING,
+          },
+        });
+
+      if (isConnectionRequestToSameUser) {
+        await tx.connectionRequest.update({
+          where: {
+            id: isConnectionRequestToSameUser.id,
+          },
+          data: {
+            status: ConnectionRequestStatus.ACCEPTED,
+          },
+        });
+      }
+
+      await tx.connection.create({
+        data: {
+          userOneId: connectionRequest.senderId,
+          userTwoId: connectionRequest.receiverId,
+        },
+      });
+    });
+
+    return {
+      success: true,
+      message: 'Connection request accepted successfully.',
+    };
+  }
 }
