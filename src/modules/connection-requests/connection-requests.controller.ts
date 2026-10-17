@@ -48,4 +48,16 @@ export class ConnectionRequestsController {
       req,
     );
   }
+
+  @Patch(':requestId/reject')
+  @HttpCode(HttpStatus.OK)
+  async rejectConnectionRequest(
+    @Param('requestId') requestId: string,
+    @Req() req: Request,
+  ) {
+    return this.connectionRequestsService.rejectConnectionRequest(
+      requestId,
+      req,
+    );
+  }
 }

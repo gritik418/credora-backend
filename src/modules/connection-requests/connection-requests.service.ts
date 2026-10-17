@@ -146,6 +146,7 @@ export class ConnectionRequestsService {
         },
         data: {
           status: ConnectionRequestStatus.ACCEPTED,
+          respondedAt: new Date(),
         },
       });
 
@@ -165,6 +166,7 @@ export class ConnectionRequestsService {
           },
           data: {
             status: ConnectionRequestStatus.ACCEPTED,
+            respondedAt: new Date(),
           },
         });
       }
@@ -180,6 +182,53 @@ export class ConnectionRequestsService {
     return {
       success: true,
       message: 'Connection request accepted successfully.',
+    };
+  }
+
+  async rejectConnectionRequest(requestId: string, req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const connectionRequest =
+      await this.prismaService.connectionRequest.findUnique({
+        where: {
+          id: requestId,
+        },
+      });
+
+    if (!connectionRequest)
+      throw new BadRequestException('Connection request not found.');
+
+    if (connectionRequest.receiverId !== userId) {
+      throw new BadRequestException(
+        'You are not authorized to reject this connection request.',
+      );
+    }
+
+    if (connectionRequest.status === ConnectionRequestStatus.EXPIRED) {
+      throw new BadRequestException('Connection request has expired.');
+    }
+
+    if (connectionRequest.status !== ConnectionRequestStatus.PENDING) {
+      throw new BadRequestException(
+        'Connection request is not pending. It might be already accepted or rejected.',
+      );
+    }
+
+    await this.prismaService.connectionRequest.update({
+      where: {
+        id: requestId,
+      },
+      data: {
+        status: ConnectionRequestStatus.DECLINED,
+        respondedAt: new Date(),
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Connection request declined successfully.',
     };
   }
 }
