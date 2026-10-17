@@ -1,4 +1,13 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { ConnectionRequestsService } from './connection-requests.service';
 import SendConnectionRequestDto from './dto/send-connection-request.dto';
@@ -12,10 +21,17 @@ export class ConnectionRequestsController {
   ) {}
 
   @Post('send')
+  @HttpCode(HttpStatus.OK)
   async sendConnectionRequest(
     @Body() data: SendConnectionRequestDto,
     @Req() req: Request,
   ) {
     return this.connectionRequestsService.sendConnectionRequest(data, req);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async getConnectionRequests(@Req() req: Request) {
+    return this.connectionRequestsService.getConnectionRequests(req);
   }
 }
