@@ -22,6 +22,8 @@ import { SkillsModule } from './modules/skills/skills.module';
 import { OnboardingModule } from './modules/onboarding/onboarding.module';
 import { TaskContributionsModule } from './modules/task-contributions/task-contributions.module';
 import { ReviewRequestsModule } from './modules/review-requests/review-requests.module';
+import { ConnectionsModule } from './modules/connections/connections.module';
+import { ConnectionRequestsModule } from './modules/connection-requests/connection-requests.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { ReviewRequestsModule } from './modules/review-requests/review-requests.
     OnboardingModule,
     TaskContributionsModule,
     ReviewRequestsModule,
+    ConnectionsModule,
+    ConnectionRequestsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,8 +1,10 @@
-import { Body, Controller, Post, Req } from '@nestjs/common';
+import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { ConnectionRequestsService } from './connection-requests.service';
 import SendConnectionRequestDto from './dto/send-connection-request.dto';
+import { AuthGuard } from 'src/common/guards/auth/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('connection-requests')
 export class ConnectionRequestsController {
   constructor(

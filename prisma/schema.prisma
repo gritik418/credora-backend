@@ -15,7 +15,6 @@ model User {
   avatar String?
   avatarPublicId String?
 
-
   username String @unique
   email         String   @unique
 
@@ -69,12 +68,63 @@ model User {
   selectedOrganizationId String?
   selectedOrganization  Organization? @relation("UserSelectedOrganization",fields: [selectedOrganizationId],references: [id],onDelete: SetNull)
 
-
   selectedWorkspaceId String?
   selectedWorkspace  Workspace? @relation("UserSelectedWorkspace",fields: [selectedWorkspaceId],references: [id],onDelete: SetNull)
+  
+  connectionsAsUserOne Connection[] @relation("ConnectionUserOne")
+  connectionsAsUserTwo Connection[] @relation("ConnectionUserTwo")
+
+  sentConnectionRequests     ConnectionRequest[] @relation("ConnectionRequestSender")
+  receivedConnectionRequests ConnectionRequest[] @relation("ConnectionRequestReceiver")
 
   @@index([username])
   @@index([email])
+}
+
+model Connection {
+  id        String   @id @default(cuid())
+
+  userOneId String
+  userTwoId String
+
+  userOne   User     @relation("ConnectionUserOne", fields: [userOneId], references: [id], onDelete: Cascade)
+  userTwo   User     @relation("ConnectionUserTwo", fields: [userTwoId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userOneId, userTwoId])
+  @@index([userOneId])
+  @@index([userTwoId])
+  @@map("connections")
+}
+
+model ConnectionRequest {
+  id         String                  @id @default(cuid())
+
+  senderId   String
+  receiverId String
+  status     ConnectionRequestStatus @default(PENDING)
+
+  message String? @db.VarChar(500)
+
+  sender     User                    @relation("ConnectionRequestSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver   User                    @relation("ConnectionRequestReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime                @default(now())
+  updatedAt  DateTime                @updatedAt
+  respondedAt DateTime?
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
+  @@map("connection_requests")
+}
+
+enum ConnectionRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
 }
 
 model Account {
