@@ -6,9 +6,9 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { ConnectionsService } from './connections.service';
 import { Request } from 'express';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
+import { ConnectionsService } from './connections.service';
 
 @UseGuards(AuthGuard)
 @Controller('connections')
@@ -19,5 +19,11 @@ export class ConnectionsController {
   @HttpCode(HttpStatus.OK)
   getConnections(@Req() req: Request) {
     return this.connectionsService.getConnections(req);
+  }
+
+  @Get('discover')
+  @HttpCode(HttpStatus.OK)
+  getSuggestedPeople(@Req() req: Request) {
+    return this.connectionsService.getSuggestedPeople(req);
   }
 }
