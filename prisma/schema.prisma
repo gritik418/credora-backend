@@ -29,6 +29,10 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  isVerified Boolean @default(false)
+  verifiedAt DateTime?
+  verifiedById String?
+
   emailVerificationToken String?
   emailVerificationTokenExpiry DateTime?
 

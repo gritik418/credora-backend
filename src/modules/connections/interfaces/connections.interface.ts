@@ -19,6 +19,7 @@ export interface SuggestedPeople {
   name: string;
   username: string;
   avatar: string | null;
+  isVerified: boolean;
   profile: {
     headline: string | null;
     industry: string | null;
@@ -49,6 +50,7 @@ export type UserAsSuggestedPeoplePayload = Prisma.UserGetPayload<{
     email: true;
     username: true;
     avatar: true;
+    isVerified: true;
     profile: {
       select: {
         headline: true;

@@ -20,6 +20,8 @@ export class ConnectionsService {
     const user = await this.prismaService.user.findUnique({
       where: {
         id: userId,
+        isEmailVerified: true,
+        isActive: true,
       },
       include: {
         connectionsAsUserOne: {
@@ -107,7 +109,7 @@ export class ConnectionsService {
     const searchTerms = search.split(/\s+/).filter(Boolean);
 
     const currentUser = await this.prismaService.user.findUnique({
-      where: { id: userId },
+      where: { id: userId, isEmailVerified: true, isActive: true },
       select: {
         id: true,
         connectionsAsUserOne: {
@@ -168,6 +170,7 @@ export class ConnectionsService {
       email: true,
       username: true,
       avatar: true,
+      isVerified: true,
       profile: {
         select: {
           headline: true,
@@ -254,6 +257,8 @@ export class ConnectionsService {
           where: {
             id: { notIn: excludedIds },
             AND: searchConditions,
+            isEmailVerified: true,
+            isActive: true,
           },
           select,
           orderBy: { name: 'asc' },
@@ -385,6 +390,8 @@ export class ConnectionsService {
                   },
                 },
               ],
+              isEmailVerified: true,
+              isActive: true,
             },
             select,
             orderBy: { id: 'asc' },
@@ -402,6 +409,8 @@ export class ConnectionsService {
                   OR: profileConditions,
                 },
               },
+              isEmailVerified: true,
+              isActive: true,
             },
             select,
             orderBy: { id: 'asc' },
@@ -442,6 +451,8 @@ export class ConnectionsService {
                   },
                 },
               ],
+              isEmailVerified: true,
+              isActive: true,
             },
             select,
             orderBy: { id: 'asc' },
@@ -610,6 +621,7 @@ export class ConnectionsService {
         name: user.name,
         username: user.username,
         avatar: user.avatar,
+        isVerified: user.isVerified,
         profile: {
           city: user.profile?.city ?? '',
           headline: user.profile?.headline ?? '',
