@@ -186,20 +186,42 @@ export class OrganizationsService {
         where: {
           organizationId,
         },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              logo: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+        },
       });
     } else {
       projects = await this.prismaService.project.findMany({
         where: {
-          workspace: {
-            members: {
-              some: {
-                userId,
-              },
+          members: {
+            some: {
+              userId,
             },
-            status: WorkspaceStatus.ACTIVE,
           },
-          organization: {
-            isActive: true,
+        },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              logo: true,
+              status: true,
+              createdAt: true,
+              updatedAt: true,
+            },
           },
         },
       });

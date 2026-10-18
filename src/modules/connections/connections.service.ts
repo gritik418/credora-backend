@@ -322,7 +322,7 @@ export class ConnectionsService {
         });
 
       this.addSuggestions(
-        this.mapUserToSuggestion(users),
+        this.mapUserToSuggestion(users, userCompanies, userInstitutions),
         'search',
         suggestionsMap,
       );
@@ -559,7 +559,11 @@ export class ConnectionsService {
     ]);
 
     this.addSuggestions(
-      this.mapUserToSuggestion(secondDegreeConnections),
+      this.mapUserToSuggestion(
+        secondDegreeConnections,
+        userCompanies,
+        userInstitutions,
+      ),
       'second-degree',
       suggestionsMap,
     );
@@ -600,14 +604,18 @@ export class ConnectionsService {
         : [];
 
     this.addSuggestions(
-      this.mapUserToSuggestion(thirdDegreeConnections),
+      this.mapUserToSuggestion(
+        thirdDegreeConnections,
+        userCompanies,
+        userInstitutions,
+      ),
       'third-degree',
       suggestionsMap,
     );
 
     for (const user of institutionPeople) {
       this.addSuggestions(
-        this.mapUserToSuggestion([user]),
+        this.mapUserToSuggestion([user], userCompanies, userInstitutions),
         'institution',
         suggestionsMap,
       );
@@ -615,7 +623,7 @@ export class ConnectionsService {
 
     for (const user of companyPeople) {
       this.addSuggestions(
-        this.mapUserToSuggestion([user]),
+        this.mapUserToSuggestion([user], userCompanies, userInstitutions),
         'company',
         suggestionsMap,
       );
@@ -693,7 +701,7 @@ export class ConnectionsService {
 
       for (const reason of reasons) {
         this.addSuggestions(
-          this.mapUserToSuggestion([user]),
+          this.mapUserToSuggestion([user], userCompanies, userInstitutions),
           reason,
           suggestionsMap,
         );
@@ -770,6 +778,8 @@ export class ConnectionsService {
 
   private mapUserToSuggestion = (
     users: UserAsSuggestedPeoplePayload[],
+    companies: string[] = [],
+    institutions: string[] = [],
   ): SuggestedPeople[] => {
     let suggestions: SuggestedPeople[] = [];
 
@@ -786,8 +796,14 @@ export class ConnectionsService {
           profession: user.profile?.profession ?? '',
           industry: user.profile?.industry ?? '',
           skills: user.profile?.skills ?? [],
-          educations: user.profile?.educations ?? [],
-          experiences: user.profile?.experiences ?? [],
+          educations:
+            user.profile?.educations.filter((education) =>
+              institutions.includes(education.institution),
+            ) ?? [],
+          experiences:
+            user.profile?.experiences.filter((experience) =>
+              companies.includes(experience.company),
+            ) ?? [],
         },
         is2ndDegree: false,
         is3rdDegree: false,
