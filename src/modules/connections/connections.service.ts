@@ -105,11 +105,14 @@ export class ConnectionsService {
     const page = Number.isFinite(parsedPage) ? Math.max(parsedPage, 1) : 1;
 
     const skip = (page - 1) * limit;
-
     const searchTerms = search.split(/\s+/).filter(Boolean);
 
     const currentUser = await this.prismaService.user.findUnique({
-      where: { id: userId, isEmailVerified: true, isActive: true },
+      where: {
+        id: userId,
+        isEmailVerified: true,
+        isActive: true,
+      },
       select: {
         id: true,
         connectionsAsUserOne: {
@@ -133,7 +136,15 @@ export class ConnectionsService {
             city: true,
             profession: true,
             bio: true,
-            skills: true,
+            skills: {
+              select: { slug: true },
+            },
+            educations: {
+              select: { institution: true },
+            },
+            experiences: {
+              select: { company: true },
+            },
           },
         },
       },
@@ -164,6 +175,25 @@ export class ConnectionsService {
     const profile = currentUser.profile;
     const userSkills = profile?.skills.map((skill) => skill.slug) ?? [];
 
+    const normalize = (value: string | null | undefined) =>
+      value?.trim().toLowerCase() ?? '';
+
+    const userInstitutions = [
+      ...new Set(
+        (profile?.educations ?? [])
+          .map((education) => education.institution.trim())
+          .filter(Boolean),
+      ),
+    ];
+
+    const userCompanies = [
+      ...new Set(
+        (profile?.experiences ?? [])
+          .map((experience) => experience.company.trim())
+          .filter(Boolean),
+      ),
+    ];
+
     const select = {
       id: true,
       name: true,
@@ -179,13 +209,18 @@ export class ConnectionsService {
           profession: true,
           bio: true,
           skills: true,
+          educations: {
+            select: { institution: true },
+          },
+          experiences: {
+            select: { company: true },
+          },
         },
       },
-    };
+    } as const;
 
     const suggestionsMap = new Map<string, SuggestedPeople>();
 
-    // Search results use normal pagination.
     if (searchTerms.length > 0) {
       const searchConditions = searchTerms.map((word) => ({
         OR: [
@@ -245,6 +280,26 @@ export class ConnectionsService {
                       },
                     },
                   },
+                  {
+                    educations: {
+                      some: {
+                        institution: {
+                          contains: word,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
+                  {
+                    experiences: {
+                      some: {
+                        company: {
+                          contains: word,
+                          mode: 'insensitive' as const,
+                        },
+                      },
+                    },
+                  },
                 ],
               },
             },
@@ -281,27 +336,35 @@ export class ConnectionsService {
       };
     }
 
-    // Allocate the requested page size across recommendation criteria.
     const ratios = {
-      secondDegree: 0.5,
-      similarPeople: 0.3,
-      thirdDegree: 0.2,
+      secondDegree: 0.4,
+      similarPeople: 0.25,
+      thirdDegree: 0.15,
+      institution: 0.1,
+      company: 0.1,
     };
 
     const allocations = {
       secondDegree: Math.floor(limit * ratios.secondDegree),
       similarPeople: Math.floor(limit * ratios.similarPeople),
-      thirdDegree: 0,
+      thirdDegree: Math.floor(limit * ratios.thirdDegree),
+      institution: Math.floor(limit * ratios.institution),
+      company: 0,
     };
 
-    allocations.thirdDegree =
-      limit - allocations.secondDegree - allocations.similarPeople;
+    allocations.company =
+      limit -
+      allocations.secondDegree -
+      allocations.similarPeople -
+      allocations.thirdDegree -
+      allocations.institution;
 
-    // Each criterion advances by its own allocation on each page.
     const offsets = {
       secondDegree: (page - 1) * allocations.secondDegree,
       similarPeople: (page - 1) * allocations.similarPeople,
       thirdDegree: (page - 1) * allocations.thirdDegree,
+      institution: (page - 1) * allocations.institution,
+      company: (page - 1) * allocations.company,
     };
 
     const wordConditions = (
@@ -331,7 +394,12 @@ export class ConnectionsService {
             .filter(Boolean)
             .map((word) => ({
               OR: [
-                { bio: { contains: word, mode: 'insensitive' as const } },
+                {
+                  bio: {
+                    contains: word,
+                    mode: 'insensitive' as const,
+                  },
+                },
                 {
                   headline: {
                     contains: word,
@@ -350,7 +418,12 @@ export class ConnectionsService {
                     mode: 'insensitive' as const,
                   },
                 },
-                { city: { contains: word, mode: 'insensitive' as const } },
+                {
+                  city: {
+                    contains: word,
+                    mode: 'insensitive' as const,
+                  },
+                },
               ],
             }))
         : []),
@@ -369,7 +442,34 @@ export class ConnectionsService {
         : []),
     ];
 
-    const [secondDegreeConnections, similarPeople] = await Promise.all([
+    const institutionConditions = userInstitutions.map((institution) => ({
+      educations: {
+        some: {
+          institution: {
+            equals: institution,
+            mode: 'insensitive' as const,
+          },
+        },
+      },
+    }));
+
+    const companyConditions = userCompanies.map((company) => ({
+      experiences: {
+        some: {
+          company: {
+            equals: company,
+            mode: 'insensitive' as const,
+          },
+        },
+      },
+    }));
+
+    const [
+      secondDegreeConnections,
+      similarPeople,
+      institutionPeople,
+      companyPeople,
+    ] = await Promise.all([
       allocations.secondDegree > 0
         ? this.prismaService.user.findMany({
             where: {
@@ -416,6 +516,44 @@ export class ConnectionsService {
             orderBy: { id: 'asc' },
             skip: offsets.similarPeople,
             take: allocations.similarPeople,
+          })
+        : Promise.resolve([]),
+
+      institutionConditions.length > 0 && allocations.institution > 0
+        ? this.prismaService.user.findMany({
+            where: {
+              id: { notIn: excludedIds },
+              profile: {
+                is: {
+                  OR: institutionConditions,
+                },
+              },
+              isEmailVerified: true,
+              isActive: true,
+            },
+            select,
+            orderBy: { id: 'asc' },
+            skip: offsets.institution,
+            take: allocations.institution,
+          })
+        : Promise.resolve([]),
+
+      companyConditions.length > 0 && allocations.company > 0
+        ? this.prismaService.user.findMany({
+            where: {
+              id: { notIn: excludedIds },
+              profile: {
+                is: {
+                  OR: companyConditions,
+                },
+              },
+              isEmailVerified: true,
+              isActive: true,
+            },
+            select,
+            orderBy: { id: 'asc' },
+            skip: offsets.company,
+            take: allocations.company,
           })
         : Promise.resolve([]),
     ]);
@@ -467,8 +605,21 @@ export class ConnectionsService {
       suggestionsMap,
     );
 
-    const normalize = (value: string | null | undefined) =>
-      value?.toLowerCase().trim() ?? '';
+    for (const user of institutionPeople) {
+      this.addSuggestions(
+        this.mapUserToSuggestion([user]),
+        'institution',
+        suggestionsMap,
+      );
+    }
+
+    for (const user of companyPeople) {
+      this.addSuggestions(
+        this.mapUserToSuggestion([user]),
+        'company',
+        suggestionsMap,
+      );
+    }
 
     for (const user of similarPeople) {
       const candidateProfile = user.profile;
@@ -549,24 +700,31 @@ export class ConnectionsService {
       }
     }
 
-    const score = (user: SuggestedPeople) =>
-      (user.is2ndDegree ? 50 : 0) +
-      (user.is3rdDegree ? 25 : 0) +
-      user.matchReasons.filter((reason) =>
-        [
-          'industry',
-          'profession',
-          'headline',
-          'skills',
-          'bio',
-          'city',
-        ].includes(reason),
-      ).length *
-        10;
+    const score = (user: SuggestedPeople) => {
+      const weights: Partial<Record<MatchReason, number>> = {
+        institution: 20,
+        company: 20,
+        industry: 10,
+        profession: 10,
+        headline: 10,
+        skills: 10,
+        bio: 10,
+        city: 10,
+      };
 
-    const suggestedPeople = Array.from(suggestionsMap.values()).sort(
-      (a, b) => score(b) - score(a),
-    );
+      return (
+        (user.is2ndDegree ? 50 : 0) +
+        (user.is3rdDegree ? 25 : 0) +
+        user.matchReasons.reduce(
+          (total, reason) => total + (weights[reason] ?? 0),
+          0,
+        )
+      );
+    };
+
+    const suggestedPeople = Array.from(suggestionsMap.values())
+      .sort((a, b) => score(b) - score(a))
+      .slice(0, limit);
 
     return {
       success: true,
@@ -628,6 +786,8 @@ export class ConnectionsService {
           profession: user.profile?.profession ?? '',
           industry: user.profile?.industry ?? '',
           skills: user.profile?.skills ?? [],
+          educations: user.profile?.educations ?? [],
+          experiences: user.profile?.experiences ?? [],
         },
         is2ndDegree: false,
         is3rdDegree: false,

@@ -26,6 +26,12 @@ export interface SuggestedPeople {
     city: string | null;
     profession: string | null;
     skills: Skill[] | null;
+    educations: {
+      institution: string;
+    }[];
+    experiences: {
+      company: string;
+    }[];
   };
   is2ndDegree: boolean;
   is3rdDegree: boolean;
@@ -41,7 +47,9 @@ export type MatchReason =
   | 'headline'
   | 'skills'
   | 'bio'
-  | 'city';
+  | 'city'
+  | 'institution'
+  | 'company';
 
 export type UserAsSuggestedPeoplePayload = Prisma.UserGetPayload<{
   select: {
@@ -59,6 +67,16 @@ export type UserAsSuggestedPeoplePayload = Prisma.UserGetPayload<{
         profession: true;
         bio: true;
         skills: true;
+        educations: {
+          select: {
+            institution: true;
+          };
+        };
+        experiences: {
+          select: {
+            company: true;
+          };
+        };
       };
     };
   };
