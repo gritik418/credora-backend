@@ -190,6 +190,31 @@ export class ProjectsService {
         where: {
           workspaceId,
         },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              description: true,
+              logo: true,
+              status: true,
+            },
+          },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  username: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
+            },
+          },
+        },
       });
     } else {
       projects = await this.prismaService.project.findMany({
@@ -198,6 +223,31 @@ export class ProjectsService {
           members: {
             some: {
               userId,
+            },
+          },
+        },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              description: true,
+              logo: true,
+              status: true,
+            },
+          },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  username: true,
+                  email: true,
+                  avatar: true,
+                },
+              },
             },
           },
         },
