@@ -39,4 +39,14 @@ export class ProjectsController {
   ) {
     return this.projectsService.getProjects(workspaceId, req);
   }
+
+  @Get(':projectSlug')
+  @HttpCode(HttpStatus.OK)
+  async getProjectBySlug(
+    @Param('projectSlug') projectSlug: string,
+    @Param('workspaceId') workspaceId: string,
+    @Req() req: Request,
+  ) {
+    return this.projectsService.getProjectBySlug(projectSlug, workspaceId, req);
+  }
 }
