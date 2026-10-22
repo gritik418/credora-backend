@@ -113,6 +113,18 @@ export class TasksService {
       );
     }
 
+    const validatedAssignees = await this.validateAssignees(
+      data.assignees,
+      projectId,
+    );
+
+    const validatedReviewers = await this.validateReviewers(
+      [...new Set([...(data.reviewers ?? []), userId])],
+      projectId,
+      project.workspaceId,
+      project.organizationId,
+    );
+
     await this.prismaService.task.create({
       data: {
         title: data.title,
@@ -126,7 +138,7 @@ export class TasksService {
         labels: data.labels,
         assignees: {
           createMany: {
-            data: data.assignees.map((assignee) => {
+            data: validatedAssignees.map((assignee) => {
               return {
                 memberId: assignee,
                 assignedAt: new Date(),
@@ -137,7 +149,7 @@ export class TasksService {
         },
         reviewRecipients: {
           createMany: {
-            data: [...(data.reviewers || []), userId].map((reviewer) => {
+            data: validatedReviewers.map((reviewer) => {
               return {
                 memberId: reviewer,
                 isDefault: reviewer === userId,
@@ -261,5 +273,137 @@ export class TasksService {
         tasks,
       },
     };
+  }
+
+  private async validateAssignees(assignees: string[], projectId: string) {
+    const uniqueIds = [...new Set(assignees)];
+
+    const validated: string[] = [];
+
+    for (const assignee of uniqueIds) {
+      const [isValidUser, isProjectMember] = await Promise.all([
+        this.prismaService.user.findUnique({
+          where: {
+            id: assignee,
+            isActive: true,
+            isEmailVerified: true,
+          },
+          select: {
+            id: true,
+          },
+        }),
+        this.prismaService.projectMember.findUnique({
+          where: {
+            projectId_userId: {
+              projectId,
+              userId: assignee,
+            },
+          },
+          select: {
+            id: true,
+          },
+        }),
+      ]);
+
+      if (isValidUser && isProjectMember) {
+        validated.push(assignee);
+      }
+    }
+
+    if (validated.length !== uniqueIds.length) {
+      throw new NotFoundException(
+        'Some assignees are either not found or not a part of the project.',
+      );
+    }
+
+    return validated;
+  }
+
+  private async validateReviewers(
+    reviewers: string[],
+    projectId: string,
+    workspaceId: string,
+    organizationId: string,
+  ) {
+    const uniqueIds = [...new Set(reviewers)];
+
+    const validated: string[] = [];
+
+    for (const reviewer of uniqueIds) {
+      const [
+        isValidUser,
+        isProjectAdmin,
+        isWorkspaceAdmin,
+        isOrgOwnerAdminOrManager,
+      ] = await Promise.all([
+        this.prismaService.user.findUnique({
+          where: {
+            id: reviewer,
+            isActive: true,
+            isEmailVerified: true,
+          },
+          select: {
+            id: true,
+          },
+        }),
+        this.prismaService.projectMember.findUnique({
+          where: {
+            projectId_userId: {
+              projectId,
+              userId: reviewer,
+            },
+            role: ProjectMemberRole.ADMIN,
+          },
+          select: {
+            id: true,
+          },
+        }),
+        this.prismaService.workspaceMember.findUnique({
+          where: {
+            workspaceId_userId: {
+              workspaceId,
+              userId: reviewer,
+            },
+            role: WorkspaceMemberRole.ADMIN,
+          },
+          select: {
+            id: true,
+          },
+        }),
+        this.prismaService.organizationMember.findUnique({
+          where: {
+            userId_organizationId: {
+              organizationId,
+              userId: reviewer,
+            },
+            role: {
+              in: [
+                OrganizationMemberRole.OWNER,
+                OrganizationMemberRole.ADMIN,
+                OrganizationMemberRole.MANAGER,
+              ],
+            },
+          },
+          select: {
+            id: true,
+          },
+        }),
+      ]);
+
+      if (
+        isValidUser &&
+        (isProjectAdmin || isWorkspaceAdmin || isOrgOwnerAdminOrManager)
+      ) {
+        validated.push(reviewer);
+      }
+    }
+
+    if (validated.length !== uniqueIds.length) {
+      throw new NotFoundException(
+        'Some reviewers are either not found or not authorized to review tasks.',
+      );
+    }
+
+    return validated;
   }
 }
