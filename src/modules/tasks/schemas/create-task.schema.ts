@@ -18,10 +18,12 @@ const CreateTaskSchema = z.object({
   dueDate: z.coerce.date().optional(),
 
   assignees: z
-    .array(z.string().min(1))
+    .array(z.string().min(1, 'Assignee ID is required'))
     .min(1, 'At least one assignee is required.'),
 
-  reviewers: z.array(z.string().min(1)).optional(),
+  reviewers: z.array(z.string().min(1, 'Reviewer ID is required')).optional(),
+
+  labels: z.array(z.string()).optional(),
 });
 
 export default CreateTaskSchema;

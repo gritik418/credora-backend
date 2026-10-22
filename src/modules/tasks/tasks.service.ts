@@ -123,6 +123,7 @@ export class TasksService {
         dueDate: data.dueDate,
         organizationId: project.organizationId,
         projectId: projectId,
+        labels: data.labels,
         assignees: {
           createMany: {
             data: data.assignees.map((assignee) => {
