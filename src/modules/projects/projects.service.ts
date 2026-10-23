@@ -16,7 +16,7 @@ import {
 } from 'generated/prisma/enums';
 import { PrismaService } from 'src/database/prisma.service';
 import CreateProjectDto from './dto/create-project.dto';
-import { Project } from 'generated/prisma/client';
+import { Project, User } from 'generated/prisma/client';
 
 @Injectable()
 export class ProjectsService {
@@ -379,6 +379,147 @@ export class ProjectsService {
       message: 'Project fetched successfully.',
       data: {
         project,
+      },
+    };
+  }
+
+  async getAvailableReviewers(projectId: string, req: Request) {
+    const userId = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const project = await this.prismaService.project.findUnique({
+      where: { id: projectId },
+    });
+
+    if (!project) throw new NotFoundException('Project not found.');
+
+    const [workspaceMember, organizationMember, projectMember] =
+      await Promise.all([
+        this.prismaService.workspaceMember.findUnique({
+          where: {
+            workspaceId_userId: {
+              workspaceId: project.workspaceId,
+              userId,
+            },
+          },
+        }),
+        this.prismaService.organizationMember.findUnique({
+          where: {
+            userId_organizationId: {
+              organizationId: project.organizationId,
+              userId,
+            },
+          },
+        }),
+        this.prismaService.projectMember.findUnique({
+          where: {
+            projectId_userId: {
+              projectId,
+              userId,
+            },
+          },
+        }),
+      ]);
+
+    if (!organizationMember)
+      throw new ForbiddenException(
+        'You are not authorized to view projects in this workspace.',
+      );
+
+    if (!organizationMember.isActive)
+      throw new ForbiddenException(
+        'Your account is inactive. Please contact the organization admin to activate your account.',
+      );
+
+    if (!organizationMember && !workspaceMember && !projectMember)
+      throw new ForbiddenException(
+        'You are not authorized to view this project.',
+      );
+
+    const isOrgAdminOrOwner =
+      organizationMember.role === OrganizationMemberRole.ADMIN ||
+      organizationMember.role === OrganizationMemberRole.OWNER;
+
+    const isWorkspaceAdmin =
+      workspaceMember?.role === WorkspaceMemberRole.ADMIN;
+
+    const isProjectAdmin = projectMember?.role === ProjectMemberRole.ADMIN;
+
+    if (!isOrgAdminOrOwner && !isWorkspaceAdmin && !isProjectAdmin) {
+      throw new ForbiddenException(
+        'You are not authorized to view reviewers in this project.',
+      );
+    }
+
+    const [projectAdmins, workspaceAdmins, organizationAdmins] =
+      await Promise.all([
+        this.prismaService.projectMember.findMany({
+          where: {
+            projectId,
+            role: ProjectMemberRole.ADMIN,
+          },
+        }),
+        this.prismaService.workspaceMember.findMany({
+          where: {
+            workspaceId: project.workspaceId,
+            role: WorkspaceMemberRole.ADMIN,
+          },
+        }),
+        this.prismaService.organizationMember.findMany({
+          where: {
+            organizationId: project.organizationId,
+            role: {
+              in: [OrganizationMemberRole.ADMIN, OrganizationMemberRole.OWNER],
+            },
+            isActive: true,
+          },
+        }),
+      ]);
+
+    const reviewerIds: string[] = [];
+
+    projectAdmins.forEach((admin) => {
+      if (admin.userId !== userId) {
+        reviewerIds.push(admin.userId);
+      }
+    });
+
+    workspaceAdmins.forEach((admin) => {
+      if (admin.userId !== userId) {
+        reviewerIds.push(admin.userId);
+      }
+    });
+
+    organizationAdmins.forEach((admin) => {
+      if (admin.userId !== userId) {
+        reviewerIds.push(admin.userId);
+      }
+    });
+
+    const uniqueReviewers = [...new Set(reviewerIds)];
+
+    const reviewers = await this.prismaService.user.findMany({
+      where: {
+        id: {
+          in: uniqueReviewers,
+        },
+        isActive: true,
+        isEmailVerified: true,
+      },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        email: true,
+        avatar: true,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Reviewers fetched successfully.',
+      data: {
+        reviewers,
       },
     };
   }

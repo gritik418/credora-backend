@@ -49,4 +49,13 @@ export class ProjectsController {
   ) {
     return this.projectsService.getProjectBySlug(projectSlug, workspaceId, req);
   }
+
+  @Get(':projectId/reviewers')
+  @HttpCode(HttpStatus.OK)
+  async getReviewers(
+    @Param('projectId') projectId: string,
+    @Req() req: Request,
+  ) {
+    return this.projectsService.getAvailableReviewers(projectId, req);
+  }
 }
