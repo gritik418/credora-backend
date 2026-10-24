@@ -58,4 +58,13 @@ export class ProjectsController {
   ) {
     return this.projectsService.getAvailableReviewers(projectId, req);
   }
+
+  @Get(':projectId/all-assignees')
+  @HttpCode(HttpStatus.OK)
+  async getAssignees(
+    @Param('projectId') projectId: string,
+    @Req() req: Request,
+  ) {
+    return this.projectsService.getAvailableAssignees(projectId, req);
+  }
 }
