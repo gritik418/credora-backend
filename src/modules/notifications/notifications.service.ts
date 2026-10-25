@@ -1,6 +1,11 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
 import { CreateNotificationPayload } from './interfaces/notifications.interface';
+import { Request } from 'express';
 
 @Injectable()
 export class NotificationsService {
@@ -36,5 +41,38 @@ export class NotificationsService {
     }
 
     throw new BadRequestException('Failed to create notification.');
+  }
+
+  async getNotifications(req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) {
+      throw new UnauthorizedException('Unauthorized.');
+    }
+
+    const notifications = await this.prismaService.notification.findMany({
+      where: {
+        recipientId: userId,
+      },
+      include: {
+        actor: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Notifications fetched successfully.',
+      data: { notifications },
+    };
   }
 }
