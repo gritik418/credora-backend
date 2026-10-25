@@ -84,6 +84,8 @@ model User {
   notificationsReceived Notification[] @relation("NotificationRecipient")
   notificationsSent     Notification[] @relation("NotificationActor")
 
+  activities Activity[] @relation("ActivityActor")
+
   @@index([username])
   @@index([email])
 }
@@ -316,6 +318,8 @@ model Organization {
   tasks Task[]
 
   selectedByUsers       User[] @relation("UserSelectedOrganization")
+
+  activities Activity[]
 }
 
 model OrganizationMember {
@@ -930,3 +934,79 @@ model Notification {
   @@index([entityType, entityId])
   @@map("notifications")
 }
+
+
+enum ActivityType {
+  ORGANIZATION_CREATED
+  ORGANIZATION_MEMBER_JOINED
+  ORGANIZATION_MEMBER_REMOVED
+  ORGANIZATION_ROLE_CHANGED
+
+  WORKSPACE_CREATED
+  WORKSPACE_UPDATED
+  WORKSPACE_ARCHIVED
+  WORKSPACE_MEMBER_ADDED
+  WORKSPACE_MEMBER_REMOVED
+
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_STATUS_CHANGED
+  PROJECT_MEMBER_ADDED
+  PROJECT_MEMBER_REMOVED
+
+  TASK_CREATED
+  TASK_UPDATED
+  TASK_STATUS_CHANGED
+  TASK_PRIORITY_CHANGED
+  TASK_ASSIGNED
+  TASK_UNASSIGNED
+  TASK_DUE_DATE_CHANGED
+  TASK_COMPLETED
+
+  REVIEW_REQUESTED
+  REVIEW_APPROVED
+  REVIEW_CHANGES_REQUESTED
+  CONTRIBUTION_SUBMITTED
+  CONTRIBUTION_VERIFIED
+  CONTRIBUTION_REJECTED
+
+  CONNECTION_REQUEST_SENT
+  CONNECTION_REQUEST_ACCEPTED
+  CONNECTION_REQUEST_DECLINED
+
+  POST_CREATED
+  POST_UPDATED
+  POST_DELETED
+  POST_COMMENTED
+  POST_REACTED
+
+  PROFILE_UPDATED
+  ACCOUNT_VERIFIED
+}
+
+model Activity {
+  id             String       @id @default(cuid())
+  type           ActivityType
+
+  actorId        String?
+  organizationId String?
+
+  entityType     String       @db.VarChar(50)
+  entityId       String
+
+  description    String?      @db.VarChar(500)
+  metadata       Json?
+
+  createdAt      DateTime     @default(now())
+
+  actor User? @relation("ActivityActor",fields: [actorId],references: [id],onDelete: SetNull)
+
+  organization Organization? @relation(fields: [organizationId],references: [id],onDelete: SetNull)
+
+  @@index([organizationId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@index([type, createdAt])
+  @@map("activities")
+}
+
