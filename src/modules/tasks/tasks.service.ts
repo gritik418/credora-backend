@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -275,7 +276,7 @@ export class TasksService {
     };
   }
 
-  private async validateAssignees(assignees: string[], projectId: string) {
+  async validateAssignees(assignees: string[], projectId: string) {
     const uniqueIds = [...new Set(assignees)];
 
     const validated: string[] = [];
@@ -311,7 +312,7 @@ export class TasksService {
     }
 
     if (validated.length !== uniqueIds.length) {
-      throw new NotFoundException(
+      throw new BadRequestException(
         'Some assignees are either not found or not a part of the project.',
       );
     }
@@ -319,7 +320,7 @@ export class TasksService {
     return validated;
   }
 
-  private async validateReviewers(
+  async validateReviewers(
     reviewers: string[],
     projectId: string,
     workspaceId: string,
@@ -399,7 +400,7 @@ export class TasksService {
     }
 
     if (validated.length !== uniqueIds.length) {
-      throw new NotFoundException(
+      throw new BadRequestException(
         'Some reviewers are either not found or not authorized to review tasks.',
       );
     }

@@ -81,6 +81,9 @@ model User {
   sentConnectionRequests     ConnectionRequest[] @relation("ConnectionRequestSender")
   receivedConnectionRequests ConnectionRequest[] @relation("ConnectionRequestReceiver")
 
+  notificationsReceived Notification[] @relation("NotificationRecipient")
+  notificationsSent     Notification[] @relation("NotificationActor")
+
   @@index([username])
   @@index([email])
 }
@@ -856,4 +859,74 @@ model PostHashtag {
   @@id([postId, hashtagId])
 
   @@index([hashtagId])
+}
+
+
+enum NotificationType {
+  ORGANIZATION_INVITE
+  ORGANIZATION_JOINED
+  ORGANIZATION_ROLE_CHANGED
+  ORGANIZATION_REMOVED
+
+  WORKSPACE_MEMBER_ADDED
+  WORKSPACE_ROLE_CHANGED
+
+  PROJECT_MEMBER_ADDED
+  PROJECT_ROLE_CHANGED
+
+  TASK_ASSIGNED
+  TASK_UNASSIGNED
+  TASK_DUE_SOON
+  TASK_OVERDUE
+  TASK_STATUS_CHANGED
+  TASK_REVIEW_REQUESTED
+  TASK_REVIEW_COMPLETED
+  TASK_COMMENT_ADDED
+  CONTRIBUTION_REQUESTED
+  CONTRIBUTION_VERIFIED
+
+  CONNECTION_REQUEST_RECEIVED
+  CONNECTION_REQUEST_ACCEPTED
+  CONNECTION_REQUEST_DECLINED
+
+  NEW_MESSAGE
+  GROUP_MESSAGE
+  MENTIONED
+
+  POST_REACTION
+  POST_COMMENT
+  COMMENT_REPLY
+
+  ACCOUNT_VERIFIED
+  SECURITY_ALERT
+}
+
+model Notification {
+  id          String           @id @default(cuid())
+  type        NotificationType
+
+  recipientId String
+  actorId     String?
+
+  title       String           @db.VarChar(200)
+  message     String           @db.VarChar(1000)
+
+  entityType  String?          @db.VarChar(50)
+  entityId    String?
+  actionUrl   String?          @db.VarChar(500)
+
+  data        Json?
+
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  expiresAt   DateTime?
+
+  recipient   User @relation("NotificationRecipient",fields: [recipientId],references: [id],onDelete: Cascade)
+
+  actor       User? @relation("NotificationActor",fields: [actorId],references: [id],onDelete: SetNull)
+
+  @@index([recipientId, readAt, createdAt])
+  @@index([recipientId, createdAt])
+  @@index([entityType, entityId])
+  @@map("notifications")
 }

@@ -469,7 +469,11 @@ export class ProjectsService {
           where: {
             organizationId: project.organizationId,
             role: {
-              in: [OrganizationMemberRole.ADMIN, OrganizationMemberRole.OWNER],
+              in: [
+                OrganizationMemberRole.ADMIN,
+                OrganizationMemberRole.OWNER,
+                OrganizationMemberRole.MANAGER,
+              ],
             },
             isActive: true,
           },
@@ -479,21 +483,15 @@ export class ProjectsService {
     const reviewerIds: string[] = [];
 
     projectAdmins.forEach((admin) => {
-      if (admin.userId !== userId) {
-        reviewerIds.push(admin.userId);
-      }
+      reviewerIds.push(admin.userId);
     });
 
     workspaceAdmins.forEach((admin) => {
-      if (admin.userId !== userId) {
-        reviewerIds.push(admin.userId);
-      }
+      reviewerIds.push(admin.userId);
     });
 
     organizationAdmins.forEach((admin) => {
-      if (admin.userId !== userId) {
-        reviewerIds.push(admin.userId);
-      }
+      reviewerIds.push(admin.userId);
     });
 
     const uniqueReviewers = [...new Set(reviewerIds)];
