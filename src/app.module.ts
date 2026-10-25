@@ -24,6 +24,7 @@ import { TaskContributionsModule } from './modules/task-contributions/task-contr
 import { ReviewRequestsModule } from './modules/review-requests/review-requests.module';
 import { ConnectionsModule } from './modules/connections/connections.module';
 import { ConnectionRequestsModule } from './modules/connection-requests/connection-requests.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { ConnectionRequestsModule } from './modules/connection-requests/connecti
     ReviewRequestsModule,
     ConnectionsModule,
     ConnectionRequestsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
