@@ -6,7 +6,11 @@ import {
 import { Request } from 'express';
 import { PrismaService } from 'src/database/prisma.service';
 import SendConnectionRequestDto from './dto/send-connection-request.dto';
-import { ConnectionRequestStatus } from 'generated/prisma/enums';
+import {
+  ConnectionRequestStatus,
+  EntityType,
+  NotificationType,
+} from 'generated/prisma/enums';
 
 @Injectable()
 export class ConnectionRequestsService {
@@ -16,6 +20,19 @@ export class ConnectionRequestsService {
     const senderId = req.user.id;
 
     if (!senderId) throw new UnauthorizedException('Unauthorized.');
+
+    const sender = await this.prismaService.user.findUnique({
+      where: {
+        id: senderId,
+      },
+      select: {
+        name: true,
+        avatar: true,
+        username: true,
+      },
+    });
+
+    if (!sender) throw new BadRequestException('Sender not found.');
 
     const receiver = await this.prismaService.user.findUnique({
       where: {
@@ -62,13 +79,27 @@ export class ConnectionRequestsService {
       );
     }
 
-    await this.prismaService.connectionRequest.create({
-      data: {
-        senderId,
-        receiverId: data.receiverId,
-        status: ConnectionRequestStatus.PENDING,
-        message: data.message,
-      },
+    await this.prismaService.$transaction(async (tx) => {
+      const connectionRequest = await tx.connectionRequest.create({
+        data: {
+          senderId,
+          receiverId: data.receiverId,
+          status: ConnectionRequestStatus.PENDING,
+          message: data.message,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          recipientId: data.receiverId,
+          type: NotificationType.CONNECTION_REQUEST_RECEIVED,
+          title: 'New Connection Request',
+          message: `${sender.name} sent you a connection request.`,
+          actorId: senderId,
+          entityId: connectionRequest.id,
+          entityType: EntityType.CONNECTION_REQUEST,
+        },
+      });
     });
 
     return {

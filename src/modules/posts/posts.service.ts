@@ -97,6 +97,20 @@ export class PostsService {
           {
             authorId: userId,
           },
+          {
+            author: {
+              connectionsAsUserOne: {
+                some: {
+                  userTwoId: userId,
+                },
+              },
+              connectionsAsUserTwo: {
+                some: {
+                  userOneId: userId,
+                },
+              },
+            },
+          },
         ],
       },
       include: {
@@ -122,7 +136,7 @@ export class PostsService {
     return {
       success: true,
       message: 'Public posts fetched successfully.',
-      data: posts,
+      data: { posts },
     };
   }
 

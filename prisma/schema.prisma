@@ -984,6 +984,14 @@ enum ActivityType {
   ACCOUNT_VERIFIED
 }
 
+enum EntityType {
+  CONNECTION_REQUEST
+  TASK
+  POST
+  COMMENT
+  REACTION
+}
+
 model Activity {
   id             String       @id @default(cuid())
   type           ActivityType
@@ -991,7 +999,7 @@ model Activity {
   actorId        String?
   organizationId String?
 
-  entityType     String       @db.VarChar(50)
+  entityType     EntityType
   entityId       String
 
   description    String?      @db.VarChar(500)
