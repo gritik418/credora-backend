@@ -919,7 +919,7 @@ model Notification {
   entityId    String?
   actionUrl   String?          @db.VarChar(500)
 
-  data        Json?
+  metadata        Json?
 
   readAt      DateTime?
   createdAt   DateTime         @default(now())

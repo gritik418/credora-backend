@@ -149,6 +149,19 @@ export class ConnectionRequestsService {
         where: {
           id: requestId,
         },
+        include: {
+          sender: {
+            select: {
+              id: true,
+            },
+          },
+          receiver: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
       });
 
     if (!connectionRequest)
@@ -206,6 +219,18 @@ export class ConnectionRequestsService {
         data: {
           userOneId: connectionRequest.senderId,
           userTwoId: connectionRequest.receiverId,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          recipientId: connectionRequest.senderId,
+          type: NotificationType.CONNECTION_REQUEST_ACCEPTED,
+          title: 'Connection Request Accepted',
+          message: `${connectionRequest.receiver.name} accepted your connection request.`,
+          actorId: connectionRequest.receiverId,
+          entityId: connectionRequest.id,
+          entityType: EntityType.CONNECTION_REQUEST,
         },
       });
     });
