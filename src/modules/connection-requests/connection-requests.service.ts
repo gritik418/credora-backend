@@ -127,6 +127,17 @@ export class ConnectionRequestsService {
               email: true,
               username: true,
               avatar: true,
+              profile: {
+                select: {
+                  bio: true,
+                  headline: true,
+                  profession: true,
+                  industry: true,
+                  city: true,
+                  state: true,
+                  country: true,
+                },
+              },
             },
           },
         },

@@ -33,6 +33,19 @@ export class ConnectionsService {
                 email: true,
                 username: true,
                 avatar: true,
+                profile: {
+                  select: {
+                    bio: true,
+                    headline: true,
+                    industry: true,
+                    city: true,
+                    profession: true,
+                    country: true,
+                    state: true,
+                    isOpenToWork: true,
+                    isOpenToCollaborate: true,
+                  },
+                },
               },
             },
           },
@@ -46,6 +59,19 @@ export class ConnectionsService {
                 email: true,
                 username: true,
                 avatar: true,
+                profile: {
+                  select: {
+                    bio: true,
+                    headline: true,
+                    industry: true,
+                    city: true,
+                    profession: true,
+                    country: true,
+                    state: true,
+                    isOpenToWork: true,
+                    isOpenToCollaborate: true,
+                  },
+                },
               },
             },
           },
@@ -60,7 +86,21 @@ export class ConnectionsService {
         return {
           id: connection.id,
           userId: user.id,
-          connection: connection.userTwo,
+          connection: {
+            ...connection.userTwo,
+            profile: {
+              bio: connection.userTwo.profile?.bio,
+              headline: connection.userTwo.profile?.headline,
+              industry: connection.userTwo.profile?.industry,
+              city: connection.userTwo.profile?.city,
+              profession: connection.userTwo.profile?.profession,
+              country: connection.userTwo.profile?.country,
+              state: connection.userTwo.profile?.state,
+              isOpenToWork: connection.userTwo.profile?.isOpenToWork,
+              isOpenToCollaborate:
+                connection.userTwo.profile?.isOpenToCollaborate,
+            },
+          },
           createdAt: connection.createdAt,
         };
       }),
@@ -69,7 +109,21 @@ export class ConnectionsService {
         return {
           id: connection.id,
           userId: user.id,
-          connection: connection.userOne,
+          connection: {
+            ...connection.userOne,
+            profile: {
+              bio: connection.userOne.profile?.bio,
+              headline: connection.userOne.profile?.headline,
+              industry: connection.userOne.profile?.industry,
+              city: connection.userOne.profile?.city,
+              profession: connection.userOne.profile?.profession,
+              country: connection.userOne.profile?.country,
+              state: connection.userOne.profile?.state,
+              isOpenToWork: connection.userOne.profile?.isOpenToWork,
+              isOpenToCollaborate:
+                connection.userOne.profile?.isOpenToCollaborate,
+            },
+          },
           createdAt: connection.createdAt,
         };
       }),
