@@ -37,6 +37,12 @@ export class ConnectionRequestsController {
     return this.connectionRequestsService.getConnectionRequests(req);
   }
 
+  @Get('sent')
+  @HttpCode(HttpStatus.OK)
+  async getSentConnectionRequests(@Req() req: Request) {
+    return this.connectionRequestsService.getSentConnectionRequests(req);
+  }
+
   @Patch(':requestId/accept')
   @HttpCode(HttpStatus.OK)
   async acceptConnectionRequest(

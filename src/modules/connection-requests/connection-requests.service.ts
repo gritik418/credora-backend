@@ -150,6 +150,48 @@ export class ConnectionRequestsService {
     };
   }
 
+  async getSentConnectionRequests(req: Request) {
+    const userId = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    const connectionRequests =
+      await this.prismaService.connectionRequest.findMany({
+        where: {
+          senderId: userId,
+          status: ConnectionRequestStatus.PENDING,
+        },
+        include: {
+          receiver: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              username: true,
+              avatar: true,
+              profile: {
+                select: {
+                  bio: true,
+                  headline: true,
+                  profession: true,
+                  industry: true,
+                  city: true,
+                  state: true,
+                  country: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+    return {
+      success: true,
+      message: 'Sent connection requests fetched successfully.',
+      data: { connectionRequests },
+    };
+  }
+
   async acceptConnectionRequest(requestId: string, req: Request) {
     const userId = req.user.id;
 
