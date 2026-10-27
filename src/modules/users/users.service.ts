@@ -194,4 +194,57 @@ export class UsersService {
       },
     };
   }
+
+  async getReceivedOrganizationInvites(req: Request) {
+    const userId: string = req.user.id;
+
+    if (!userId) throw new UnauthorizedException('Unauthorized');
+
+    const user = await this.prismaService.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        email: true,
+      },
+    });
+
+    if (!user) throw new NotFoundException('User not found.');
+
+    const invites = await this.prismaService.organizationInvite.findMany({
+      where: {
+        email: user.email,
+      },
+      include: {
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            logo: true,
+            description: true,
+            supportEmail: true,
+            website: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        invitedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            username: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Received organization invites fetched successfully.',
+      data: { invites },
+    };
+  }
 }
