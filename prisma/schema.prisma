@@ -362,7 +362,6 @@ model OrganizationInvite {
   department     String?
   designation    String?
 
-  token       String   @unique
   expiresAt   DateTime
 
   acceptedAt DateTime?

@@ -252,9 +252,6 @@ export class OrganizationInvitesService {
       },
     });
 
-    const token: string = randomBytes(32).toString('hex');
-    const hashedToken: string = await this.hashingService.hashValue(token, 8);
-
     const invite = await this.prismaService.organizationInvite.create({
       data: {
         email: data.email,
@@ -263,13 +260,12 @@ export class OrganizationInvitesService {
         role: data.role,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         status: OrganizationInviteStatus.PENDING,
-        token: hashedToken,
         department: data.department,
         designation: data.designation,
       },
     });
 
-    const invitationLink: string = `${this.configService.get<string>('CLIENT_URL')}/organization-invites/${invite.id}/${token}`;
+    const invitationLink: string = `${this.configService.get<string>('CLIENT_URL')}/invites/organization/${invite.id}`;
 
     await this.emailProducer.sendOrganizationInviteEmail({
       invitationLink,
@@ -455,9 +451,6 @@ export class OrganizationInvitesService {
       },
     });
 
-    const token: string = randomBytes(32).toString('hex');
-    const hashedToken: string = await this.hashingService.hashValue(token, 8);
-
     const updatedInvite = await this.prismaService.organizationInvite.create({
       data: {
         email: invite.email,
@@ -466,11 +459,10 @@ export class OrganizationInvitesService {
         role: invite.role,
         expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         status: OrganizationInviteStatus.PENDING,
-        token: hashedToken,
       },
     });
 
-    const invitationLink: string = `${this.configService.get<string>('CLIENT_URL')}/organization-invites/${invite.id}/${token}`;
+    const invitationLink: string = `${this.configService.get<string>('CLIENT_URL')}/invites/organization/${invite.id}`;
 
     await this.emailProducer.sendOrganizationInviteEmail({
       invitationLink,
@@ -499,13 +491,11 @@ export class OrganizationInvitesService {
     };
   }
 
-  async acceptInvite(inviteId: string, token: string, req: Request) {
+  async acceptInvite(inviteId: string, req: Request) {
     const userId: string = req.user.id;
     if (!userId) throw new UnauthorizedException('Unauthorized.');
 
     if (!inviteId) throw new BadRequestException('Invalid invitation link.');
-
-    if (!token) throw new BadRequestException('Invalid invitation link.');
 
     const invite = await this.prismaService.organizationInvite.findUnique({
       where: { id: inviteId },
@@ -538,7 +528,7 @@ export class OrganizationInvitesService {
         'You are already a member of this organization.',
       );
 
-    if (invite.email !== user.email)
+    if (invite.email.toLowerCase() !== user.email.toLowerCase())
       throw new BadRequestException('Invalid invitation link.');
 
     if (invite.status !== OrganizationInviteStatus.PENDING)
@@ -546,14 +536,6 @@ export class OrganizationInvitesService {
 
     if (new Date() > invite.expiresAt)
       throw new BadRequestException('Invitation link has expired.');
-
-    const isTokenValid: boolean = await this.hashingService.compareValues(
-      token,
-      invite.token,
-    );
-
-    if (!isTokenValid)
-      throw new BadRequestException('Invalid invitation link.');
 
     await this.prismaService.$transaction(async (tx) => {
       await tx.organizationInvite.update({
@@ -592,13 +574,11 @@ export class OrganizationInvitesService {
     };
   }
 
-  async declineInvite(inviteId: string, token: string, req: Request) {
+  async declineInvite(inviteId: string, req: Request) {
     const userId: string = req.user.id;
     if (!userId) throw new UnauthorizedException('Unauthorized.');
 
     if (!inviteId) throw new BadRequestException('Invalid invitation link.');
-
-    if (!token) throw new BadRequestException('Invalid invitation link.');
 
     const invite = await this.prismaService.organizationInvite.findUnique({
       where: { id: inviteId },
@@ -639,14 +619,6 @@ export class OrganizationInvitesService {
 
     if (new Date() > invite.expiresAt)
       throw new BadRequestException('Invitation link has expired.');
-
-    const isTokenValid: boolean = await this.hashingService.compareValues(
-      token,
-      invite.token,
-    );
-
-    if (!isTokenValid)
-      throw new BadRequestException('Invalid invitation link.');
 
     await this.prismaService.organizationInvite.update({
       where: { id: invite.id },

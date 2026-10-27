@@ -1,39 +1,33 @@
 import {
   Controller,
-  Post,
-  Param,
-  Redirect,
-  Req,
-  UseGuards,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
-import { OrganizationInvitesService } from '../organization-invites.service';
 import { Request } from 'express';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
+import { OrganizationInvitesService } from '../organization-invites.service';
 
 @UseGuards(AuthGuard)
 @Controller('organization-invites/:inviteId')
 export class OrganizationInviteActionsController {
   constructor(private readonly invitesService: OrganizationInvitesService) {}
 
-  @Post(':token/accept')
+  @Patch('accept')
   @HttpCode(HttpStatus.OK)
-  async acceptInvite(
-    @Param('inviteId') inviteId: string,
-    @Param('token') token: string,
-    @Req() req: Request,
-  ) {
-    return this.invitesService.acceptInvite(inviteId, token, req);
+  async acceptInvite(@Param('inviteId') inviteId: string, @Req() req: Request) {
+    return this.invitesService.acceptInvite(inviteId, req);
   }
 
-  @Post(':token/decline')
+  @Patch('decline')
   @HttpCode(HttpStatus.OK)
   async declineInvite(
     @Param('inviteId') inviteId: string,
-    @Param('token') token: string,
     @Req() req: Request,
   ) {
-    return this.invitesService.declineInvite(inviteId, token, req);
+    return this.invitesService.declineInvite(inviteId, req);
   }
 }

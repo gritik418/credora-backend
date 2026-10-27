@@ -10,6 +10,7 @@ import { CloudinaryFolders } from 'src/providers/cloudinary/cloudinary.constants
 import { CustomUploadResult } from 'src/providers/cloudinary/cloudinary.interface';
 import { CloudinaryService } from 'src/providers/cloudinary/cloudinary.service';
 import UpdateUsernameDto from './dto/update-username.dto';
+import { OrganizationInviteStatus } from 'generated/prisma/enums';
 
 @Injectable()
 export class UsersService {
@@ -211,9 +212,28 @@ export class UsersService {
 
     if (!user) throw new NotFoundException('User not found.');
 
+    await this.prismaService.organizationInvite.updateMany({
+      where: {
+        email: user.email,
+        status: OrganizationInviteStatus.PENDING,
+        expiresAt: {
+          lt: new Date(),
+        },
+      },
+      data: {
+        status: OrganizationInviteStatus.EXPIRED,
+      },
+    });
+
     const invites = await this.prismaService.organizationInvite.findMany({
       where: {
         email: user.email,
+        status: {
+          in: [
+            OrganizationInviteStatus.PENDING,
+            OrganizationInviteStatus.EXPIRED,
+          ],
+        },
       },
       select: {
         id: true,
@@ -227,7 +247,6 @@ export class UsersService {
         organizationId: true,
         role: true,
         status: true,
-        token: false,
         organization: {
           select: {
             id: true,
