@@ -215,7 +215,19 @@ export class UsersService {
       where: {
         email: user.email,
       },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        department: true,
+        designation: true,
+        acceptedAt: true,
+        createdAt: true,
+        expiresAt: true,
+        invitedById: true,
+        organizationId: true,
+        role: true,
+        status: true,
+        token: false,
         organization: {
           select: {
             id: true,
@@ -239,12 +251,21 @@ export class UsersService {
           },
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const sortedInvites = [...invites].sort((a, b) => {
+      if (a.status === 'PENDING' && b.status !== 'PENDING') return -1;
+      if (a.status !== 'PENDING' && b.status === 'PENDING') return 1;
+      return 0;
     });
 
     return {
       success: true,
       message: 'Received organization invites fetched successfully.',
-      data: { invites },
+      data: { invites: sortedInvites },
     };
   }
 }

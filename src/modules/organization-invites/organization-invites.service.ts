@@ -591,4 +591,73 @@ export class OrganizationInvitesService {
       message: 'Invite accepted successfully.',
     };
   }
+
+  async declineInvite(inviteId: string, token: string, req: Request) {
+    const userId: string = req.user.id;
+    if (!userId) throw new UnauthorizedException('Unauthorized.');
+
+    if (!inviteId) throw new BadRequestException('Invalid invitation link.');
+
+    if (!token) throw new BadRequestException('Invalid invitation link.');
+
+    const invite = await this.prismaService.organizationInvite.findUnique({
+      where: { id: inviteId },
+    });
+
+    if (!invite) throw new BadRequestException('Invalid invitation link.');
+
+    const user = await this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: {
+        email: true,
+      },
+    });
+
+    if (!user) throw new UnauthorizedException('Unauthorized.');
+
+    const existingMember =
+      await this.prismaService.organizationMember.findFirst({
+        where: {
+          userId: userId,
+          organizationId: invite.organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+
+    if (existingMember)
+      throw new BadRequestException(
+        'You are already a member of this organization.',
+      );
+
+    if (invite.email !== user.email)
+      throw new BadRequestException('Invalid invitation link.');
+
+    if (invite.status !== OrganizationInviteStatus.PENDING)
+      throw new BadRequestException('Invalid invitation link.');
+
+    if (new Date() > invite.expiresAt)
+      throw new BadRequestException('Invitation link has expired.');
+
+    const isTokenValid: boolean = await this.hashingService.compareValues(
+      token,
+      invite.token,
+    );
+
+    if (!isTokenValid)
+      throw new BadRequestException('Invalid invitation link.');
+
+    await this.prismaService.organizationInvite.update({
+      where: { id: invite.id },
+      data: {
+        status: OrganizationInviteStatus.REJECTED,
+      },
+    });
+
+    return {
+      success: true,
+      message: 'Invite declined successfully.',
+    };
+  }
 }

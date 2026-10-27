@@ -26,4 +26,14 @@ export class OrganizationInviteActionsController {
   ) {
     return this.invitesService.acceptInvite(inviteId, token, req);
   }
+
+  @Post(':token/decline')
+  @HttpCode(HttpStatus.OK)
+  async declineInvite(
+    @Param('inviteId') inviteId: string,
+    @Param('token') token: string,
+    @Req() req: Request,
+  ) {
+    return this.invitesService.declineInvite(inviteId, token, req);
+  }
 }
