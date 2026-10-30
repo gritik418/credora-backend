@@ -217,7 +217,9 @@ export class ProjectMembersService {
     return {
       success: true,
       message: 'Project members added successfully.',
-      addedCount: validMemberIds.length,
+      data: {
+        addedCount: validMemberIds.length,
+      },
     };
   }
 

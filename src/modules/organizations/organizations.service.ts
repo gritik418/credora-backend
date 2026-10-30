@@ -204,6 +204,7 @@ export class OrganizationsService {
     } else {
       projects = await this.prismaService.project.findMany({
         where: {
+          organizationId,
           members: {
             some: {
               userId,
