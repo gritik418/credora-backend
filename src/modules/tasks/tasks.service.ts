@@ -14,6 +14,10 @@ import {
   WorkspaceMemberRole,
   WorkspaceStatus,
 } from 'generated/prisma/enums';
+import { PaginationQuery } from 'src/common/schemas/pagination.schema';
+import { PaginatedResponse } from 'src/common/interfaces/pagination.interface';
+import { Task } from 'generated/prisma/client';
+import TaskQueryDto from './dto/task-query.dto';
 
 @Injectable()
 export class TasksService {
@@ -167,7 +171,12 @@ export class TasksService {
     };
   }
 
-  async getTasks(projectId: string, req: Request) {
+  async getTasks(
+    projectId: string,
+    req: Request,
+    pagination: PaginationQuery,
+    query: TaskQueryDto,
+  ) {
     const userId: string = req.user.id;
     if (!userId) throw new UnauthorizedException('Unauthorized.');
 
@@ -257,22 +266,71 @@ export class TasksService {
       );
     }
 
-    const tasks = await this.prismaService.task.findMany({
-      where: {
-        projectId,
+    const limit = pagination.limit ?? 10;
+    const page = pagination.page ?? 1;
+    const skip = (page - 1) * limit;
+
+    const search = query.search;
+    const status = query.status;
+    const priority = query.priority;
+    const sortBy = query.sortBy;
+    const sortOrder = query.sortOrder;
+
+    const where: Record<string, object | string> = { projectId };
+    const orderBy: Record<string, 'asc' | 'desc'> = {};
+
+    if (search) {
+      where.title = {
+        contains: search,
+        mode: 'insensitive',
+      };
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    if (priority) {
+      where.priority = priority;
+    }
+
+    if (sortBy || sortOrder) {
+      const order: 'asc' | 'desc' = sortOrder ?? 'desc';
+      const sortKey = sortBy ?? 'createdAt';
+
+      orderBy[sortKey] = order;
+    }
+
+    const [tasks, totalTasks] = await Promise.all([
+      this.prismaService.task.findMany({
+        where,
+        take: limit,
+        skip,
+        include: {
+          assignees: true,
+          reviewRecipients: true,
+        },
+        orderBy,
+      }),
+      this.prismaService.task.count({
+        where,
+      }),
+    ]);
+
+    const data: PaginatedResponse<Task[]> = {
+      data: tasks,
+      meta: {
+        limit,
+        page,
+        total: totalTasks,
+        totalPages: Math.ceil(totalTasks / limit),
       },
-      include: {
-        assignees: true,
-        reviewRecipients: true,
-      },
-    });
+    };
 
     return {
       success: true,
       message: 'Tasks fetched successfully.',
-      data: {
-        tasks,
-      },
+      data,
     };
   }
 

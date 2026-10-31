@@ -1,20 +1,27 @@
 import {
-  Controller,
   Body,
-  Param,
-  Post,
-  Req,
-  UseGuards,
+  Controller,
+  Get,
   HttpCode,
   HttpStatus,
-  Get,
+  Param,
+  Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
-import { TasksService } from './tasks.service';
 import { Request } from 'express';
-import { ZodValidationPipe } from 'src/common/pipes/zod-validation/zod-validation.pipe';
-import CreateTaskSchema from './schemas/create-task.schema';
-import CreateTaskDto from './dto/create-task.dto';
 import { AuthGuard } from 'src/common/guards/auth/auth.guard';
+import { ZodValidationPipe } from 'src/common/pipes/zod-validation/zod-validation.pipe';
+import {
+  PaginationQuery,
+  PaginationSchema,
+} from 'src/common/schemas/pagination.schema';
+import CreateTaskDto from './dto/create-task.dto';
+import CreateTaskSchema from './schemas/create-task.schema';
+import { TasksService } from './tasks.service';
+import TaskQuerySchema from './schemas/task-query.schema';
+import TaskQueryDto from './dto/task-query.dto';
 
 @UseGuards(AuthGuard)
 @Controller('projects/:projectId/tasks')
@@ -25,7 +32,8 @@ export class TasksController {
   @HttpCode(HttpStatus.CREATED)
   async createTask(
     @Param('projectId') projectId: string,
-    @Body(new ZodValidationPipe(CreateTaskSchema)) data: CreateTaskDto,
+    @Body(new ZodValidationPipe(CreateTaskSchema))
+    data: CreateTaskDto,
     @Req() req: Request,
   ) {
     return this.tasksService.createTask(projectId, data, req);
@@ -33,7 +41,12 @@ export class TasksController {
 
   @Get()
   @HttpCode(HttpStatus.OK)
-  async getTasks(@Param('projectId') projectId: string, @Req() req: Request) {
-    return this.tasksService.getTasks(projectId, req);
+  async getTasks(
+    @Param('projectId') projectId: string,
+    @Req() req: Request,
+    @Query(new ZodValidationPipe(PaginationSchema)) pagination: PaginationQuery,
+    @Query(new ZodValidationPipe(TaskQuerySchema)) query: TaskQueryDto,
+  ) {
+    return this.tasksService.getTasks(projectId, req, pagination, query);
   }
 }
