@@ -5,7 +5,8 @@ export interface PaginationMeta {
   totalPages: number;
 }
 
-export interface PaginatedResponse<T> {
-  data: T;
+export type PaginatedResponse<T, K extends string = 'data'> = {
+  [key in K]: T;
+} & {
   meta: PaginationMeta;
-}
+};

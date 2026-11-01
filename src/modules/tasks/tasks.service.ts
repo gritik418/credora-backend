@@ -119,7 +119,7 @@ export class TasksService {
     }
 
     const validatedAssignees = await this.validateAssignees(
-      data.assignees,
+      data.assignees || [],
       projectId,
     );
 
@@ -266,9 +266,9 @@ export class TasksService {
       );
     }
 
-    const limit = pagination.limit ?? 10;
-    const page = pagination.page ?? 1;
-    const skip = (page - 1) * limit;
+    const limit: number = Number(pagination.limit ?? 10);
+    const page: number = Number(pagination.page ?? 1);
+    const skip: number = Number((page - 1) * limit);
 
     const search = query.search;
     const status = query.status;
@@ -317,8 +317,8 @@ export class TasksService {
       }),
     ]);
 
-    const data: PaginatedResponse<Task[]> = {
-      data: tasks,
+    const data: PaginatedResponse<Task[], 'tasks'> = {
+      tasks,
       meta: {
         limit,
         page,
