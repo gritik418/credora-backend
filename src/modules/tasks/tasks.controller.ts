@@ -49,4 +49,13 @@ export class TasksController {
   ) {
     return this.tasksService.getTasks(projectId, req, pagination, query);
   }
+
+  @Get(':taskId')
+  async getTask(
+    @Param('projectId') projectId: string,
+    @Param('taskId') taskId: string,
+    @Req() req: Request,
+  ) {
+    return this.tasksService.getTaskById(projectId, taskId, req);
+  }
 }
